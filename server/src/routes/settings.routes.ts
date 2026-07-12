@@ -4,6 +4,7 @@ import prisma from '../lib/prisma';
 import { validate } from '../middleware/validate';
 import { requireAuth, requireRole } from '../middleware/auth';
 import { emitToAll } from '../socket/eventBus';
+import { ScoringEngine } from '../services/ScoringEngine';
 
 const router = Router();
 
@@ -238,6 +239,20 @@ router.patch('/esg-config', requireAuth, requireRole('ADMIN'), validate(updateEs
     }
 
     emitToAll('settings:updated', config);
+
+    // Recalculate scores organizational-wide due to weights update
+    try {
+      const departments = await prisma.department.findMany({ where: { status: 'ACTIVE' }, select: { id: true } });
+      for (const d of departments) {
+        await ScoringEngine.calculateDepartmentScore(d.id);
+      }
+      const orgScore = await ScoringEngine.calculateOrgScore();
+      emitToAll('score:update', {
+        orgScore,
+      });
+    } catch (err) {
+      console.error('[Settings] Error recalculating scores after config change:', err);
+    }
 
     return res.json({ success: true, data: config });
   } catch (error) {

@@ -1,5 +1,6 @@
 import prisma from '../lib/prisma';
 import { emitToAll } from '../socket/eventBus';
+import { NudgeEngine } from './NudgeEngine';
 
 export interface DeptScoreResult {
   departmentId: string;
@@ -239,6 +240,9 @@ export class ScoringEngine {
     try {
       const deptScores = await this.calculateDepartmentScore(departmentId);
       const orgScore = await this.calculateOrgScore();
+
+      // Refresh behavioral nudges dynamically
+      await NudgeEngine.evaluateNudges();
 
       emitToAll('score:update', {
         departmentId,

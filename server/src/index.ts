@@ -22,14 +22,20 @@ import dashboardRoutes from './routes/dashboard.routes';
 import reportsRoutes from './routes/reports.routes';
 import settingsRoutes from './routes/settings.routes';
 import productsRoutes from './routes/products.routes';
+import notificationsRoutes from './routes/notifications.routes';
 
 const app = express();
 const server = http.createServer(app);
 
+const allowedOrigins = [
+  process.env.CLIENT_URL || 'http://localhost:3000',
+  'http://localhost:5173',
+];
+
 // Socket.IO setup
 const io = new Server(server, {
   cors: {
-    origin: process.env.CLIENT_URL || 'http://localhost:3000',
+    origin: allowedOrigins,
     methods: ['GET', 'POST', 'PATCH', 'PUT', 'DELETE'],
   },
 });
@@ -41,7 +47,7 @@ initSocket(io);
 app.use(helmet());
 app.use(
   cors({
-    origin: process.env.CLIENT_URL || 'http://localhost:3000',
+    origin: allowedOrigins,
     credentials: true,
   })
 );
@@ -61,6 +67,7 @@ app.use('/api/dashboard', dashboardRoutes);
 app.use('/api/reports', reportsRoutes);
 app.use('/api/settings', settingsRoutes);
 app.use('/api/products', productsRoutes);
+app.use('/api/notifications', notificationsRoutes);
 
 // Root route
 app.get('/', (req, res) => {

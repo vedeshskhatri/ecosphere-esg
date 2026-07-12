@@ -1,6 +1,7 @@
 import axios from 'axios';
+import prisma from './lib/prisma';
 
-const BASE_URL = 'http://localhost:5000/api';
+const BASE_URL = 'http://localhost:5001/api';
 
 async function runTests() {
   console.log('🤖 Starting EcoSphere Backend Integration Tests...');
@@ -10,7 +11,7 @@ async function runTests() {
 
   // 1. Healthcheck Test
   try {
-    const res = await axios.get('http://localhost:5000/');
+    const res = await axios.get('http://localhost:5001/');
     console.log('✅ Healthcheck root status: OK', res.data);
   } catch (error: any) {
     console.error('❌ Healthcheck root failed:', error.message);
@@ -88,36 +89,52 @@ async function runTests() {
     console.error('❌ Environmental Emission Factors failed:', error.response?.data || error.message);
   }
 
-  // 9. AI Carbon Forecast Test
+  // 9. Environmental Transactions List Test
   try {
-    const res = await axios.get(`${BASE_URL}/environmental/carbon-transactions/forecast`, authHeaders);
-    console.log('✅ AI Carbon Forecast: SUCCESS, found', res.data.data.forecast.length, 'forecast points,', res.data.data.anomalies.length, 'anomaly checks, and', res.data.data.recommendations.length, 'smart recommendations');
+    const res = await axios.get(`${BASE_URL}/environmental/transactions`, authHeaders);
+    console.log('✅ Environmental Transactions: SUCCESS, found', res.data.data.length, 'logged transactions');
   } catch (error: any) {
-    console.error('❌ AI Carbon Forecast failed:', error.response?.data || error.message);
+    console.error('❌ Environmental Transactions failed:', error.response?.data || error.message);
   }
 
-  // 10. Social Diversity Metrics Test
+  // 10. Reports summary Test
   try {
-    const res = await axios.get(`${BASE_URL}/social/diversity`, authHeaders);
-    console.log('✅ Social Diversity Metrics: SUCCESS, found', res.data.data.totalEmployees, 'employees categorized');
+    const res = await axios.get(`${BASE_URL}/reports/summary`, authHeaders);
+    console.log('✅ Reports Summary: SUCCESS, orgScore is', res.data.data.orgScore, '%');
   } catch (error: any) {
-    console.error('❌ Social Diversity Metrics failed:', error.response?.data || error.message);
+    console.error('❌ Reports Summary failed:', error.response?.data || error.message);
   }
 
-  // 11. PDF Report Export Test
+  // 11. Reports Environmental Breakdown Test
   try {
-    const res = await axios.get(`${BASE_URL}/reports/pdf`, { ...authHeaders, responseType: 'arraybuffer' });
-    console.log('✅ PDF ESG Certificate: SUCCESS, received file of size', res.data.byteLength, 'bytes');
+    const res = await axios.get(`${BASE_URL}/reports/environmental`, authHeaders);
+    console.log('✅ Reports Environmental: SUCCESS, total emissions:', res.data.data.totalEmissionsCo2, 'Kg');
   } catch (error: any) {
-    console.error('❌ PDF ESG Certificate failed:', error.response?.data || error.message);
+    console.error('❌ Reports Environmental failed:', error.response?.data || error.message);
   }
 
-  // 12. CSV Emissions Export Test
+  // 12. CSV Export Test
   try {
-    const res = await axios.get(`${BASE_URL}/reports/csv?type=emissions`, authHeaders);
-    console.log('✅ CSV Emissions Report: SUCCESS, fetched content lines:', res.data.split('\n').length);
+    const res = await axios.get(`${BASE_URL}/reports/export?type=environmental`, authHeaders);
+    console.log('✅ CSV Export: SUCCESS, fetched content lines:', res.data.split('\n').length);
   } catch (error: any) {
-    console.error('❌ CSV Emissions Report failed:', error.response?.data || error.message);
+    console.error('❌ CSV Export failed:', error.response?.data || error.message);
+  }
+
+  // 13. Gamification Challenges Test
+  try {
+    const res = await axios.get(`${BASE_URL}/gamification/challenges`, authHeaders);
+    console.log('✅ Gamification Challenges: SUCCESS, found', res.data.data.length, 'challenges');
+  } catch (error: any) {
+    console.error('❌ Gamification Challenges failed:', error.response?.data || error.message);
+  }
+
+  // 14. Rewards Catalog Test
+  try {
+    const res = await axios.get(`${BASE_URL}/gamification/rewards`, authHeaders);
+    console.log('✅ Rewards Catalog: SUCCESS, found', res.data.data.length, 'rewards');
+  } catch (error: any) {
+    console.error('❌ Rewards Catalog failed:', error.response?.data || error.message);
   }
 
   console.log('==================================================');
