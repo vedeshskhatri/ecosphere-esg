@@ -66,12 +66,12 @@ interface ESGState {
   rejectParticipation: (partId: string, notes: string) => Promise<void>;
 
   // Governance actions
-  createPolicy: (policy: any) => Promise<void>;
+  createPolicy: (policy: any) => Promise<boolean>;
   updatePolicyStatus: (policyId: string, status: string) => Promise<void>;
   acknowledgePolicy: (policyId: string) => Promise<void>;
-  createAudit: (audit: any) => Promise<void>;
+  createAudit: (audit: any) => Promise<boolean>;
   updateAuditStatus: (auditId: string, status: string, findings?: string) => Promise<void>;
-  createComplianceIssue: (issue: any) => Promise<void>;
+  createComplianceIssue: (issue: any) => Promise<boolean>;
   updateComplianceIssueStatus: (issueId: string, status: string) => Promise<void>;
 
   // Gamification actions
