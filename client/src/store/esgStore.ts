@@ -67,6 +67,7 @@ interface ESGState {
 
   // Governance actions
   createPolicy: (policy: any) => Promise<void>;
+  updatePolicyStatus: (policyId: string, status: string) => Promise<void>;
   acknowledgePolicy: (policyId: string) => Promise<void>;
   createAudit: (audit: any) => Promise<void>;
   updateAuditStatus: (auditId: string, status: string, findings?: string) => Promise<void>;
@@ -343,6 +344,13 @@ export const useEsgStore = create<ESGState>((set, get) => {
       await api.post('/governance/policies', policy);
       toast.success('ESG policy drafted successfully!');
       get().fetchGovernanceData();
+    },
+
+    updatePolicyStatus: async (policyId: string, status: string) => {
+      await api.patch(`/governance/policies/${policyId}`, { status });
+      toast.success(`Policy status updated to ${status}!`);
+      get().fetchGovernanceData();
+      get().fetchDashboardData();
     },
 
     acknowledgePolicy: async (policyId: string) => {

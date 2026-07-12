@@ -64,10 +64,11 @@ export const NotificationBell: React.FC<NotificationBellProps> = ({ isOpen, onCl
         display: 'flex',
         flexDirection: 'column',
         zIndex: 1000,
-        boxShadow: '0 12px 40px rgba(0,0,0,0.5)',
+        boxShadow: '0 10px 30px rgba(25, 53, 12, 0.12)',
         padding: '1rem',
-        backgroundColor: 'rgba(19, 23, 31, 0.95)',
-        border: '1px solid var(--border-focus)'
+        backgroundColor: '#ffffff',
+        border: '1px solid rgba(25, 53, 12, 0.12)',
+        color: 'var(--text-primary)'
       }}
     >
       <div style={{
@@ -110,7 +111,7 @@ export const NotificationBell: React.FC<NotificationBellProps> = ({ isOpen, onCl
                 gap: '0.75rem',
                 padding: '0.625rem',
                 borderRadius: 'var(--radius-sm)',
-                backgroundColor: n.isRead ? 'transparent' : 'rgba(255, 255, 255, 0.02)',
+                backgroundColor: n.isRead ? 'transparent' : 'rgba(25, 53, 12, 0.04)',
                 borderLeft: n.isRead ? '2px solid transparent' : '2px solid var(--env)',
                 cursor: n.isRead ? 'default' : 'pointer',
                 transition: 'background-color 0.15s ease'

@@ -11,7 +11,7 @@ export const GovernancePage: React.FC = () => {
   const { 
     policies, audits, complianceIssues, departments,
     fetchGovernanceData, acknowledgePolicy,
-    createPolicy, createAudit, createComplianceIssue, updateComplianceIssueStatus 
+    createPolicy, updatePolicyStatus, createAudit, createComplianceIssue, updateComplianceIssueStatus 
   } = useEsgStore();
 
   const location = useLocation();
@@ -246,39 +246,39 @@ export const GovernancePage: React.FC = () => {
 
           {/* Draft policy Form */}
           {showPolicyForm && (
-            <div className="card" style={{ borderLeft: '4px solid var(--gov)' }}>
-              <h3 style={{ marginBottom: '1rem' }}>Draft ESG Compliance Policy</h3>
+            <div className="card" style={{ borderLeft: '4px solid var(--gov)', backgroundColor: '#ffffff', border: '1px solid rgba(25, 53, 12, 0.12)', boxShadow: '0 10px 30px rgba(25, 53, 12, 0.05)' }}>
+              <h3 style={{ marginBottom: '1rem', color: '#19350C', fontWeight: 800 }}>Draft ESG Compliance Policy</h3>
               <form onSubmit={handlePolicySubmit} style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '1rem' }}>
                 <div>
-                  <label className="label">Policy Title</label>
-                  <input type="text" className="input" placeholder="e.g. Wastewater Recycling Standard" value={pTitle} onChange={(e) => setPTitle(e.target.value)} required />
+                  <label className="label" style={{ color: '#19350C', fontWeight: 600 }}>Policy Title</label>
+                  <input type="text" className="input" placeholder="e.g. Wastewater Recycling Standard" value={pTitle} onChange={(e) => setPTitle(e.target.value)} style={{ background: '#ffffff', color: '#19350C', border: '1px solid rgba(25, 53, 12, 0.15)' }} required />
                 </div>
                 <div>
-                  <label className="label">Applicable Department</label>
-                  <select className="input" value={pDeptId} onChange={(e) => setPDeptId(e.target.value)}>
-                    <option value="">Global (All Departments)</option>
-                    {departments.map((d) => <option key={d.id} value={d.id}>{d.name}</option>)}
+                  <label className="label" style={{ color: '#19350C', fontWeight: 600 }}>Applicable Department</label>
+                  <select className="input" value={pDeptId} onChange={(e) => setPDeptId(e.target.value)} style={{ background: '#ffffff', color: '#19350C', border: '1px solid rgba(25, 53, 12, 0.15)' }}>
+                    <option value="" style={{ background: '#ffffff', color: '#19350C' }}>Global (All Departments)</option>
+                    {departments.map((d) => <option key={d.id} value={d.id} style={{ background: '#ffffff', color: '#19350C' }}>{d.name}</option>)}
                   </select>
                 </div>
                 <div>
-                  <label className="label">Effective Date</label>
-                  <input type="date" className="input" value={pEffectiveDate} onChange={(e) => setPEffectiveDate(e.target.value)} required />
+                  <label className="label" style={{ color: '#19350C', fontWeight: 600 }}>Effective Date</label>
+                  <input type="date" className="input" value={pEffectiveDate} onChange={(e) => setPEffectiveDate(e.target.value)} style={{ background: '#ffffff', color: '#19350C', border: '1px solid rgba(25, 53, 12, 0.15)' }} required />
                 </div>
                 <div>
-                  <label className="label">Status</label>
-                  <select className="input" value={pStatus} onChange={(e: any) => setPStatus(e.target.value)}>
-                    <option value="ACTIVE">Active (Requires Acknowledgement)</option>
-                    <option value="DRAFT">Draft (Internal Review)</option>
+                  <label className="label" style={{ color: '#19350C', fontWeight: 600 }}>Status</label>
+                  <select className="input" value={pStatus} onChange={(e: any) => setPStatus(e.target.value)} style={{ background: '#ffffff', color: '#19350C', border: '1px solid rgba(25, 53, 12, 0.15)' }}>
+                    <option value="ACTIVE" style={{ background: '#ffffff', color: '#19350C' }}>Active (Requires Acknowledgement)</option>
+                    <option value="DRAFT" style={{ background: '#ffffff', color: '#19350C' }}>Draft (Internal Review)</option>
                   </select>
                 </div>
                 <div style={{ gridColumn: '1 / -1' }}>
-                  <label className="label">Description / Mandate</label>
-                  <textarea className="input" rows={3} placeholder="Outline standard operating procedures, thresholds and goals..." value={pDescription} onChange={(e) => setPDescription(e.target.value)} required />
+                  <label className="label" style={{ color: '#19350C', fontWeight: 600 }}>Description / Mandate</label>
+                  <textarea className="input" rows={3} placeholder="Outline standard operating procedures, thresholds and goals..." value={pDescription} onChange={(e) => setPDescription(e.target.value)} style={{ resize: 'none', background: '#ffffff', color: '#19350C', border: '1px solid rgba(25, 53, 12, 0.15)' }} required />
                 </div>
 
                 <div style={{ gridColumn: '1 / -1', display: 'flex', gap: '0.75rem', justifyContent: 'flex-end' }}>
-                  <button type="button" onClick={() => setShowPolicyForm(false)} className="btn btn-secondary">Cancel</button>
-                  <button type="submit" className="btn btn-primary">Save Policy</button>
+                  <button type="button" onClick={() => setShowPolicyForm(false)} className="btn btn-secondary" style={{ background: 'rgba(25, 53, 12, 0.05)', color: '#3D4A28', border: '1px solid rgba(25, 53, 12, 0.1)' }}>Cancel</button>
+                  <button type="submit" className="btn btn-primary" style={{ background: '#687D31', color: '#ffffff', border: 'none' }}>Save Policy</button>
                 </div>
               </form>
             </div>
@@ -326,13 +326,25 @@ export const GovernancePage: React.FC = () => {
                       ) : (
                         // Managers see stats and Nudge Reminder button
                         <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
-                          <span style={{ fontSize: 'var(--text-sm)', color: 'var(--text-muted)' }}>
-                            Acknowledgements: <strong>{totalAck} / {totalExpected}</strong>
-                          </span>
-                          {policy.status === 'ACTIVE' && totalExpected > totalAck && (
-                            <button onClick={() => sendPolicyReminder(policy.id)} className="btn btn-secondary" style={{ padding: '0.35rem 0.75rem', gap: '4px' }}>
-                              <Bell size={14} /> Remind Employees
+                          {policy.status === 'DRAFT' ? (
+                            <button
+                              onClick={() => updatePolicyStatus(policy.id, 'ACTIVE')}
+                              className="btn btn-primary"
+                              style={{ padding: '0.35rem 0.75rem' }}
+                            >
+                              Publish Policy
                             </button>
+                          ) : (
+                            <>
+                              <span style={{ fontSize: 'var(--text-sm)', color: 'var(--text-muted)' }}>
+                                Acknowledgements: <strong>{totalAck} / {totalExpected}</strong>
+                              </span>
+                              {policy.status === 'ACTIVE' && totalExpected > totalAck && (
+                                <button onClick={() => sendPolicyReminder(policy.id)} className="btn btn-secondary" style={{ padding: '0.35rem 0.75rem', gap: '4px' }}>
+                                  <Bell size={14} /> Remind Employees
+                                </button>
+                              )}
+                            </>
                           )}
                         </div>
                       )}

@@ -43,7 +43,8 @@ export const ReportsPage: React.FC = () => {
   }, [reportType, deptId, startDate, endDate]);
 
   const handleExport = () => {
-    let url = `http://localhost:5001/api/reports/export?type=${reportType}`;
+    const apiBase = api.defaults.baseURL || 'http://localhost:5000/api';
+    let url = `${apiBase}/reports/export?type=${reportType}`;
     if (deptId) url += `&departmentId=${deptId}`;
     if (startDate) url += `&startDate=${startDate}`;
     if (endDate) url += `&endDate=${endDate}`;

@@ -30,7 +30,7 @@
   --offwhite:       #F7F6F3;
 
   /* — Semantic surface tokens — */
-  --bg-page:        var(--lightgray);       /* page canvas */
+  --bg-page:        #DFDDD6;       /* page canvas */
   --bg-surface:     var(--lightgray-20);    /* cards, panels */
   --bg-surface-raised: var(--offwhite);     /* modals, dropdowns */
   --bg-sidebar:     var(--lightgray-20);    /* nav sidebar (light theme) */
@@ -136,7 +136,8 @@ html {
 }
 
 body {
-  background-color: var(--bg-page);
+  background: linear-gradient(135deg, #F5F4F0 0%, #DFDDD6 100%);
+  background-attachment: fixed;
   color: var(--text-primary);
   font-family: var(--font-body);
   font-size: var(--text-base);
@@ -262,7 +263,8 @@ code, pre, kbd, .mono, .data-value {
 .page-layout {
   margin-left: var(--sidebar-width-collapsed);
   min-height: 100vh;
-  background: var(--bg-page);
+  background: linear-gradient(135deg, #F5F4F0 0%, #DFDDD6 100%);
+  background-attachment: fixed;
   display: flex;
   flex-direction: column;
   flex: 1;
