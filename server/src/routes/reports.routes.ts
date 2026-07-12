@@ -319,9 +319,9 @@ router.get('/export', requireAuth, async (req, res) => {
       csvText = convertToCSV(headers, rows);
     }
 
-    res.setHeader('Content-Type', 'text/csv');
+    res.setHeader('Content-Type', 'application/vnd.ms-excel; charset=utf-8');
     res.setHeader('Content-Disposition', `attachment; filename="ecosphere_${type || 'summary'}_report.csv"`);
-    return res.send(csvText);
+    return res.send('\uFEFF' + csvText);
   } catch (error: any) {
     return res.status(500).json({ success: false, error: error.message });
   }

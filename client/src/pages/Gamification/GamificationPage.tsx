@@ -1238,10 +1238,10 @@ export const GamificationPage: React.FC = () => {
       {activeTab === 'leaderboard' && (
         <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
           <div>
-            <h2 style={{ fontSize: '1.25rem', fontWeight: 800, color: '#f1f5f9', margin: 0, display: 'flex', alignItems: 'center', gap: '6px' }}>
+            <h2 style={{ fontSize: '1.25rem', fontWeight: 800, color: '#19350C', margin: 0, display: 'flex', alignItems: 'center', gap: '6px' }}>
               <Crown size={22} color="#f59e0b" /> Organization ESG Leaderboard
             </h2>
-            <p style={{ fontSize: '0.85rem', color: '#94a3b8', margin: '4px 0 0 0' }}>
+            <p style={{ fontSize: '0.85rem', color: '#3D4A28', margin: '4px 0 0 0', fontWeight: 500 }}>
               Real-time standings of all members sorted by total sustainability XP earned.
             </p>
           </div>
@@ -1253,7 +1253,7 @@ export const GamificationPage: React.FC = () => {
               ))}
             </div>
           ) : leaderboard.length === 0 ? (
-            <div className="glass-card" style={{ padding: '3rem', textAlign: 'center', color: '#64748b' }}>
+            <div className="glass-card" style={{ padding: '3rem', textAlign: 'center', color: '#3D4A28' }}>
               <Users size={32} style={{ margin: '0 auto 0.75rem auto', display: 'block', opacity: 0.5 }} />
               <p style={{ margin: 0, fontWeight: 500 }}>No users on the leaderboard.</p>
             </div>
@@ -1263,11 +1263,11 @@ export const GamificationPage: React.FC = () => {
               <table className="glass-table">
                 <thead>
                   <tr>
-                    <th style={{ width: '80px', paddingLeft: '1.5rem' }}>Rank</th>
-                    <th>Name</th>
-                    <th>Department</th>
-                    <th>Badges</th>
-                    <th style={{ textAlign: 'right', paddingRight: '1.5rem' }}>Total XP</th>
+                    <th style={{ width: '80px', paddingLeft: '1.5rem', color: '#19350C' }}>Rank</th>
+                    <th style={{ color: '#19350C' }}>Name</th>
+                    <th style={{ color: '#19350C' }}>Department</th>
+                    <th style={{ color: '#19350C' }}>Badges</th>
+                    <th style={{ textAlign: 'right', paddingRight: '1.5rem', color: '#19350C' }}>Total XP</th>
                   </tr>
                 </thead>
                 <tbody style={{ position: 'relative' }}>
@@ -1305,15 +1305,15 @@ export const GamificationPage: React.FC = () => {
                           layout
                           transition={{ type: 'spring', stiffness: 350, damping: 30 }}
                           style={{
-                            background: isCurrentUser ? 'rgba(59, 130, 246, 0.08)' : 'transparent',
-                            borderLeft: isCurrentUser ? '3px solid #3b82f6' : 'none'
+                            background: isCurrentUser ? 'rgba(104, 125, 49, 0.08)' : 'transparent',
+                            borderLeft: isCurrentUser ? '3px solid #687D31' : 'none'
                           }}
                         >
-                          <td style={{ fontWeight: '800', paddingLeft: '1.5rem' }}>{rankDisplay}</td>
-                          <td style={{ fontWeight: isCurrentUser ? 700 : 500, color: isCurrentUser ? '#f1f5f9' : '#94a3b8' }}>
-                            {item.name} {isCurrentUser && <span style={{ color: '#3b82f6', fontSize: '0.8rem', marginLeft: '4px' }}>(You)</span>}
+                          <td style={{ fontWeight: '800', paddingLeft: '1.5rem', color: '#19350C' }}>{rankDisplay}</td>
+                          <td style={{ fontWeight: isCurrentUser ? 700 : 500, color: isCurrentUser ? '#19350C' : '#2C3E20' }}>
+                            {item.name} {isCurrentUser && <span style={{ color: '#687D31', fontSize: '0.8rem', marginLeft: '4px', fontWeight: 700 }}>(You)</span>}
                           </td>
-                          <td>{deptName}</td>
+                          <td style={{ color: '#2C3E20', fontWeight: 500 }}>{deptName}</td>
                           <td>
                             <span style={{
                               background: 'rgba(249, 115, 22, 0.1)',
