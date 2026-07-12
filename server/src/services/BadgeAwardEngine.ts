@@ -1,6 +1,7 @@
 import prisma from '../lib/prisma';
 import { createNotification } from './NotificationService';
 import { emitToAll, emitToUser } from '../socket/eventBus';
+import { EmailService } from './EmailService';
 
 export class BadgeAwardEngine {
   /**
@@ -19,7 +20,7 @@ export class BadgeAwardEngine {
       // 2. Fetch employee details (XP)
       const employee = await prisma.user.findUnique({
         where: { id: employeeId },
-        select: { name: true, xp: true },
+        select: { name: true, xp: true, email: true },
       });
 
       if (!employee) {
@@ -104,6 +105,21 @@ export class BadgeAwardEngine {
           refType: 'Badge',
           refId: badge.id,
         });
+
+        // Send simulated email alert
+        if (employee) {
+          const emailHtml = EmailService.getBadgeUnlockTemplate(
+            employee.name,
+            badge.name,
+            badge.icon,
+            badge.description
+          );
+          EmailService.sendAlertEmail(
+            employee.email,
+            `🏆 Badge Unlocked: ${badge.name}`,
+            emailHtml
+          );
+        }
 
         // Emit targeted WebSocket event to the earned user
         emitToUser(employeeId, 'badge:awarded', {
