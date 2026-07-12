@@ -5,9 +5,10 @@ interface ScoreRingProps {
   max?: number;
   color: string;
   label: string;
+  size?: number;
 }
 
-export const ScoreRing: React.FC<ScoreRingProps> = ({ value, max = 100, color, label }) => {
+export const ScoreRing: React.FC<ScoreRingProps> = ({ value, max = 100, color, label, size = 124 }) => {
   const [animatedValue, setAnimatedValue] = useState(0);
 
   useEffect(() => {
@@ -18,7 +19,7 @@ export const ScoreRing: React.FC<ScoreRingProps> = ({ value, max = 100, color, l
     return () => clearTimeout(timer);
   }, [value, max]);
 
-  const RADIUS = 52;
+  const RADIUS = Math.round(size / 2 - 10);
   const CIRCUMFERENCE = 2 * Math.PI * RADIUS;
   const percentage = (animatedValue / max) * 100;
   const strokeDashoffset = CIRCUMFERENCE - (percentage / 100) * CIRCUMFERENCE;
@@ -40,12 +41,12 @@ export const ScoreRing: React.FC<ScoreRingProps> = ({ value, max = 100, color, l
       justifyContent: 'center',
       gap: '0.75rem'
     }}>
-      <div style={{ position: 'relative', width: '124px', height: '124px' }}>
-        <svg width="124" height="124" viewBox="0 0 124 124">
+      <div style={{ position: 'relative', width: `${size}px`, height: `${size}px` }}>
+        <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`}>
           {/* Background circle */}
           <circle
-            cx="62"
-            cy="62"
+            cx={size / 2}
+            cy={size / 2}
             r={RADIUS}
             fill="transparent"
             stroke="rgba(255,255,255,0.06)"
@@ -53,8 +54,8 @@ export const ScoreRing: React.FC<ScoreRingProps> = ({ value, max = 100, color, l
           />
           {/* Active progress circle */}
           <circle
-            cx="62"
-            cy="62"
+            cx={size / 2}
+            cy={size / 2}
             r={RADIUS}
             fill="transparent"
             stroke={activeColor}
@@ -77,7 +78,7 @@ export const ScoreRing: React.FC<ScoreRingProps> = ({ value, max = 100, color, l
           alignItems: 'center',
           justifyContent: 'center'
         }}>
-          <span style={{ fontSize: 'var(--text-3xl)', fontWeight: 800, letterSpacing: '-0.05em' }}>
+          <span style={{ fontSize: size > 130 ? 'var(--text-4xl)' : 'var(--text-3xl)', fontWeight: 800, letterSpacing: '-0.05em' }}>
             {Math.round(animatedValue)}
           </span>
           <span style={{ fontSize: 'var(--text-xs)', color: 'var(--text-muted)', fontWeight: 500 }}>
