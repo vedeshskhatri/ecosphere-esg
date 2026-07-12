@@ -1,4 +1,5 @@
 import React, { useEffect, useState, useCallback, useMemo } from 'react';
+import { useLocation, useNavigate } from 'react-router-dom';
 import api from '../../lib/api';
 import useAuthStore from '../../store/authStore';
 import { socket } from '../../lib/socket';
@@ -80,10 +81,35 @@ interface Department {
 export const GamificationPage: React.FC = () => {
   const { user, setUser } = useAuthStore();
   const isAdminOrManager = user?.role === 'ADMIN' || user?.role === 'MANAGER';
+  const location = useLocation();
+  const navigate = useNavigate();
 
   // Navigation Tabs
   type TabType = 'challenges' | 'approvals' | 'badges' | 'rewards' | 'leaderboard';
-  const [activeTab, setActiveTab] = useState<TabType>('challenges');
+  
+  const getTabFromPath = (): TabType => {
+    const path = location.pathname;
+    if (path.includes('/approvals')) return 'approvals';
+    if (path.includes('/badges')) return 'badges';
+    if (path.includes('/rewards')) return 'rewards';
+    if (path.includes('/leaderboard')) return 'leaderboard';
+    return 'challenges';
+  };
+
+  const [activeTab, setActiveTab] = useState<TabType>(getTabFromPath());
+
+  useEffect(() => {
+    setActiveTab(getTabFromPath());
+  }, [location.pathname]);
+
+  const handleTabChange = (tab: TabType) => {
+    setActiveTab(tab);
+    if (tab === 'challenges') navigate('/gamification/challenges');
+    else if (tab === 'approvals') navigate('/gamification/approvals');
+    else if (tab === 'badges') navigate('/gamification/badges');
+    else if (tab === 'rewards') navigate('/gamification/rewards');
+    else if (tab === 'leaderboard') navigate('/gamification/leaderboard');
+  };
 
   // Sub-filter pills for Challenges
   type FilterType = 'ALL' | 'DRAFT' | 'ACTIVE' | 'UNDER_REVIEW' | 'COMPLETED' | 'ARCHIVED';
@@ -434,36 +460,36 @@ export const GamificationPage: React.FC = () => {
       {/* CSS Stylesheet Injector */}
       <style>{`
         .glass-card {
-          background: rgba(22, 26, 35, 0.85);
-          backdrop-filter: blur(12px);
-          -webkit-backdrop-filter: blur(12px);
-          border: 1px solid rgba(255, 255, 255, 0.08);
-          border-radius: 16px;
-          box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
-          transition: transform 0.25s ease, box-shadow 0.25s ease, border-color 0.25s ease;
+          background: #ffffff;
+          border: 1px solid rgba(25,53,12,0.10);
+          border-radius: 14px;
+          box-shadow: 0 1px 4px rgba(25,53,12,0.06), 0 2px 12px rgba(25,53,12,0.04);
           position: relative;
           overflow: hidden;
+          transition: transform 0.22s ease, box-shadow 0.22s ease;
         }
         .glass-card:hover {
           transform: translateY(-2px);
-          box-shadow: 0 12px 40px rgba(0, 0, 0, 0.5);
+          box-shadow: 0 4px 20px rgba(25,53,12,0.10);
         }
         .tab-btn {
           background: none;
           border: none;
-          font-weight: 600;
-          font-size: 0.95rem;
-          color: #94a3b8;
+          font-weight: 500;
+          font-size: 0.875rem;
+          color: #687D31;
           cursor: pointer;
-          padding: 0.75rem 1rem;
+          padding: 0.625rem 0.875rem;
           position: relative;
-          transition: color 0.2s;
+          transition: color 0.15s;
+          font-family: 'Inter', sans-serif;
         }
         .tab-btn:hover {
-          color: #f1f5f9;
+          color: #19350C;
         }
         .tab-btn.active {
-          color: #f97316;
+          color: #19350C;
+          font-weight: 600;
         }
         .tab-btn.active::after {
           content: '';
@@ -471,67 +497,71 @@ export const GamificationPage: React.FC = () => {
           bottom: 0;
           left: 0;
           right: 0;
-          height: 3px;
-          background: #f97316;
+          height: 2px;
+          background: #687D31;
           border-radius: 999px;
         }
         .filter-pill {
-          background: rgba(255, 255, 255, 0.03);
-          border: 1px solid rgba(255, 255, 255, 0.05);
-          color: #94a3b8;
-          padding: 0.4rem 0.875rem;
+          background: rgba(25,53,12,0.05);
+          border: 1px solid rgba(25,53,12,0.12);
+          color: #687D31;
+          padding: 0.35rem 0.875rem;
           border-radius: 999px;
-          font-size: 0.825rem;
-          font-weight: 600;
+          font-size: 0.8rem;
+          font-weight: 500;
           cursor: pointer;
-          transition: all 0.2s ease;
+          transition: all 0.18s ease;
+          font-family: 'Inter', sans-serif;
         }
         .filter-pill:hover {
-          background: rgba(255, 255, 255, 0.08);
-          color: #f1f5f9;
+          background: rgba(25,53,12,0.09);
+          color: #19350C;
         }
         .filter-pill.active {
-          background: rgba(249, 115, 22, 0.15);
-          border-color: rgba(249, 115, 22, 0.3);
-          color: #f97316;
+          background: rgba(104,125,49,0.15);
+          border-color: rgba(104,125,49,0.35);
+          color: #19350C;
+          font-weight: 600;
         }
         .btn-gamify {
-          background: #f97316;
-          color: #000000;
+          background: #687D31;
+          color: #ffffff;
           border: none;
           border-radius: 8px;
-          padding: 0.625rem 1.25rem;
-          font-weight: 700;
+          padding: 0.575rem 1.125rem;
+          font-weight: 600;
           font-size: 0.875rem;
           cursor: pointer;
           transition: all 0.2s ease;
+          font-family: 'Inter', sans-serif;
         }
         .btn-gamify:hover:not(:disabled) {
-          background: #fb923c;
+          background: #7A9038;
           transform: translateY(-1px);
         }
         .btn-gamify:disabled {
-          background: rgba(255, 255, 255, 0.05);
-          color: #64748b;
+          background: rgba(25,53,12,0.08);
+          color: #687D31;
           cursor: not-allowed;
         }
         .btn-secondary-gamify {
-          background: rgba(255, 255, 255, 0.04);
-          border: 1px solid rgba(255, 255, 255, 0.08);
-          color: #94a3b8;
+          background: rgba(25,53,12,0.06);
+          border: 1px solid rgba(25,53,12,0.14);
+          color: #3D4A28;
           padding: 0.35rem 0.75rem;
           border-radius: 6px;
           font-size: 0.8rem;
-          font-weight: 600;
+          font-weight: 500;
           cursor: pointer;
-          transition: all 0.2s ease;
+          transition: all 0.18s ease;
           display: inline-flex;
           align-items: center;
           gap: 4px;
+          font-family: 'Inter', sans-serif;
         }
         .btn-secondary-gamify:hover {
-          background: rgba(255, 255, 255, 0.1);
-          color: #f1f5f9;
+          background: rgba(25,53,12,0.10);
+          color: #19350C;
         }
         .text-truncate-2 {
           display: -webkit-box;
@@ -546,42 +576,43 @@ export const GamificationPage: React.FC = () => {
           text-align: left;
         }
         .glass-table th {
-          color: #64748b;
+          color: #687D31;
           font-weight: 600;
-          font-size: 0.75rem;
+          font-size: 0.7rem;
           text-transform: uppercase;
-          letter-spacing: 0.05em;
-          padding: 1rem;
-          border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+          letter-spacing: 0.06em;
+          padding: 0.875rem 1rem;
+          border-bottom: 1px solid rgba(25,53,12,0.10);
         }
         .glass-table td {
-          padding: 1.25rem 1rem;
-          border-bottom: 1px solid rgba(255, 255, 255, 0.04);
-          color: #94a3b8;
-          font-size: 0.9rem;
+          padding: 1.125rem 1rem;
+          border-bottom: 1px solid rgba(25,53,12,0.06);
+          color: #3D4A28;
+          font-size: 0.875rem;
         }
         .glass-table tr:last-child td {
           border-bottom: none;
         }
         .glass-table tr:hover td {
-          background: rgba(255, 255, 255, 0.02);
+          background: rgba(104,125,49,0.04);
         }
         .form-input {
-          background: rgba(0, 0, 0, 0.35);
-          border: 1px solid rgba(255, 255, 255, 0.1);
+          background: #ffffff;
+          border: 1px solid rgba(25,53,12,0.18);
           border-radius: 8px;
-          color: #f1f5f9;
-          padding: 0.65rem 0.75rem;
-          font-size: 0.9rem;
+          color: #19350C;
+          padding: 0.6rem 0.75rem;
+          font-size: 0.875rem;
           width: 100%;
           outline: none;
-          transition: border-color 0.2s;
+          transition: border-color 0.18s;
+          font-family: 'Inter', sans-serif;
         }
         .form-input:focus {
-          border-color: #f97316;
+          border-color: #687D31;
         }
         .shimmer-anim {
-          background: linear-gradient(90deg, rgba(255,255,255,0.03) 25%, rgba(255,255,255,0.08) 37%, rgba(255,255,255,0.03) 63%);
+          background: linear-gradient(90deg, #f0ede9 25%, #e8e4df 37%, #f0ede9 63%);
           background-size: 400% 100%;
           animation: shimmer-load 1.4s ease infinite;
         }
@@ -594,7 +625,7 @@ export const GamificationPage: React.FC = () => {
       {/* Page Header */}
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '1rem' }}>
         <div>
-          <h1 style={{ fontSize: 'var(--text-3xl)', fontWeight: '800', letterSpacing: '-0.02em', margin: 0, color: '#f1f5f9' }}>
+          <h1 style={{ fontSize: 'var(--text-2xl)', fontWeight: '700', letterSpacing: '-0.02em', margin: 0, color: '#19350C' }}>
             Gamification Center
           </h1>
           <p style={{ fontSize: 'var(--text-sm)', color: '#94a3b8', margin: '4px 0 0 0' }}>
@@ -604,35 +635,35 @@ export const GamificationPage: React.FC = () => {
       </div>
 
       {/* Main Tab Navigation */}
-      <div style={{ display: 'flex', gap: '1.5rem', borderBottom: '1px solid rgba(255,255,255,0.08)', overflowX: 'auto', paddingBottom: '2px' }}>
+      <div style={{ display: 'flex', gap: '0.25rem', borderBottom: '1px solid rgba(25,53,12,0.10)', overflowX: 'auto', paddingBottom: '2px', marginBottom: '1.5rem' }}>
         <button
-          onClick={() => setActiveTab('challenges')}
+          onClick={() => handleTabChange('challenges')}
           className={`tab-btn ${activeTab === 'challenges' ? 'active' : ''}`}
         >
           Challenges
         </button>
         {isAdminOrManager && (
           <button
-            onClick={() => setActiveTab('approvals')}
+            onClick={() => handleTabChange('approvals')}
             className={`tab-btn ${activeTab === 'approvals' ? 'active' : ''}`}
           >
             Challenge Approvals
           </button>
         )}
         <button
-          onClick={() => setActiveTab('badges')}
+          onClick={() => handleTabChange('badges')}
           className={`tab-btn ${activeTab === 'badges' ? 'active' : ''}`}
         >
           Badges
         </button>
         <button
-          onClick={() => setActiveTab('rewards')}
+          onClick={() => handleTabChange('rewards')}
           className={`tab-btn ${activeTab === 'rewards' ? 'active' : ''}`}
         >
           Rewards
         </button>
         <button
-          onClick={() => setActiveTab('leaderboard')}
+          onClick={() => handleTabChange('leaderboard')}
           className={`tab-btn ${activeTab === 'leaderboard' ? 'active' : ''}`}
         >
           Leaderboard
@@ -710,7 +741,7 @@ export const GamificationPage: React.FC = () => {
                   <div key={ch.id} className="glass-card" style={{ display: 'flex', flexDirection: 'column' }}>
                     
                     {/* Top Accent Bar */}
-                    <div style={{ height: '4px', background: '#f97316', width: '100%' }} />
+                    <div style={{ height: '4px', background: '#8A6A28', width: '100%' }} />
 
                     {/* Card Content Body */}
                     <div style={{ padding: '1.25rem', display: 'flex', flexDirection: 'column', gap: '0.85rem', flex: 1 }}>
@@ -743,24 +774,24 @@ export const GamificationPage: React.FC = () => {
                       {/* Header with Title and Icon */}
                       <div style={{ display: 'flex', gap: '0.75rem', alignItems: 'flex-start' }}>
                         <div style={{
-                          background: 'rgba(249, 115, 22, 0.12)',
+                          background: 'rgba(138, 106, 40, 0.12)',
                           borderRadius: '8px',
                           padding: '0.5rem',
                           display: 'flex',
                           alignItems: 'center',
                           justifyContent: 'center',
-                          color: '#f97316',
+                          color: '#8A6A28',
                           flexShrink: 0
                         }}>
                           <Trophy size={18} />
                         </div>
-                        <h3 style={{ fontSize: '1.05rem', fontWeight: 700, color: '#f1f5f9', margin: 0, lineHeight: '1.3' }}>
+                        <h3 style={{ fontSize: '1.05rem', fontWeight: 700, color: '#19350C', margin: 0, lineHeight: '1.3' }}>
                           {ch.title}
                         </h3>
                       </div>
 
                       {/* Description */}
-                      <p className="text-truncate-2" style={{ fontSize: '0.875rem', color: '#94a3b8', margin: 0, lineHeight: '1.4', flex: 1 }}>
+                      <p className="text-truncate-2" style={{ fontSize: '0.875rem', color: '#3D4A28', margin: 0, lineHeight: '1.4', flex: 1 }}>
                         {ch.description}
                       </p>
 
@@ -768,8 +799,8 @@ export const GamificationPage: React.FC = () => {
                       <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem', alignItems: 'center', paddingTop: '0.25rem' }}>
                         {ch.category?.name && (
                           <span style={{
-                            background: 'rgba(59, 130, 246, 0.15)',
-                            color: '#3b82f6',
+                            background: 'rgba(111, 169, 187, 0.15)',
+                            color: '#6FA9BB',
                             fontSize: '0.725rem',
                             fontWeight: 600,
                             borderRadius: '999px',
@@ -779,19 +810,19 @@ export const GamificationPage: React.FC = () => {
                           </span>
                         )}
 
-                        <span style={{ fontSize: '0.725rem', color: '#f97316', fontWeight: 700, display: 'inline-flex', alignItems: 'center', gap: '3px' }}>
+                        <span style={{ fontSize: '0.725rem', color: '#8A6A28', fontWeight: 700, display: 'inline-flex', alignItems: 'center', gap: '3px' }}>
                           🏆 {ch.xp} XP
                         </span>
                       </div>
 
                       {/* Deadline Row */}
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '4px', fontSize: '0.75rem', color: '#64748b' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '4px', fontSize: '0.75rem', color: '#687D31' }}>
                         <Clock size={12} />
                         <span>Deadline: {ch.deadline ? new Date(ch.deadline).toLocaleDateString() : 'None'}</span>
                       </div>
 
                       {/* Actions Division */}
-                      <div style={{ marginTop: '0.5rem', display: 'flex', flexDirection: 'column', gap: '0.5rem', borderTop: '1px solid rgba(255, 255, 255, 0.05)', paddingTop: '0.75rem' }}>
+                      <div style={{ marginTop: '0.5rem', display: 'flex', flexDirection: 'column', gap: '0.5rem', borderTop: '1px solid rgba(25, 53, 12, 0.08)', paddingTop: '0.75rem' }}>
                         
                         {/* Employee Join Actions */}
                         {user?.role === 'EMPLOYEE' && (
@@ -909,7 +940,7 @@ export const GamificationPage: React.FC = () => {
           ───────────────────────────────────────── */}
       {activeTab === 'approvals' && isAdminOrManager && (
         <div className="glass-card" style={{ padding: '1.5rem' }}>
-          <h2 style={{ fontSize: '1.25rem', fontWeight: 800, color: '#f1f5f9', marginTop: 0, marginBottom: '1.25rem' }}>
+          <h2 style={{ fontSize: '1.25rem', fontWeight: 800, color: '#19350C', marginTop: 0, marginBottom: '1.25rem' }}>
             Challenge Approvals Queue
           </h2>
 
@@ -920,7 +951,7 @@ export const GamificationPage: React.FC = () => {
               ))}
             </div>
           ) : pendingParticipations.length === 0 ? (
-            <div style={{ padding: '3rem', textAlign: 'center', color: '#64748b' }}>
+            <div style={{ padding: '3rem', textAlign: 'center', color: '#3D4A28' }}>
               <CheckCircle size={32} style={{ color: '#22c55e', margin: '0 auto 0.75rem auto', display: 'block' }} />
               <p style={{ margin: 0, fontWeight: 500 }}>No pending challenge approval requests.</p>
             </div>
@@ -939,7 +970,7 @@ export const GamificationPage: React.FC = () => {
                 <tbody>
                   {pendingParticipations.map((part) => (
                     <tr key={part.id}>
-                      <td style={{ color: '#f1f5f9', fontWeight: 700 }}>{part.employeeName}</td>
+                      <td style={{ color: '#19350C', fontWeight: 700 }}>{part.employeeName}</td>
                       <td>{part.challengeTitle}</td>
                       <td>
                         {part.proofUrl ? (
@@ -948,7 +979,7 @@ export const GamificationPage: React.FC = () => {
                             target="_blank"
                             rel="noopener noreferrer"
                             style={{
-                              color: '#f97316',
+                              color: '#8A6A28',
                               textDecoration: 'none',
                               fontWeight: 600,
                               display: 'inline-flex',
@@ -959,10 +990,10 @@ export const GamificationPage: React.FC = () => {
                             <FileText size={14} /> View Document
                           </a>
                         ) : (
-                          <span style={{ color: '#64748b', fontSize: '0.85rem' }}>No proof uploaded</span>
+                          <span style={{ color: '#687D31', fontSize: '0.85rem' }}>No proof uploaded</span>
                         )}
                       </td>
-                      <td style={{ color: '#f97316', fontWeight: 700 }}>
+                      <td style={{ color: '#8A6A28', fontWeight: 700 }}>
                         🏆 {part.xpAwarded || 100} XP
                       </td>
                       <td>
@@ -998,10 +1029,10 @@ export const GamificationPage: React.FC = () => {
       {activeTab === 'badges' && (
         <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
           <div>
-            <h2 style={{ fontSize: '1.25rem', fontWeight: 800, color: '#f1f5f9', margin: 0 }}>
+            <h2 style={{ fontSize: '1.25rem', fontWeight: 800, color: '#19350C', margin: 0 }}>
               Milestone Badge Achievements
             </h2>
-            <p style={{ fontSize: '0.85rem', color: '#94a3b8', margin: '4px 0 0 0' }}>
+            <p style={{ fontSize: '0.85rem', color: '#3D4A28', margin: '4px 0 0 0' }}>
               Complete actions across EcoSphere to unlock permanent awards and bragging rights.
             </p>
           </div>
@@ -1013,7 +1044,7 @@ export const GamificationPage: React.FC = () => {
               ))}
             </div>
           ) : badges.length === 0 ? (
-            <div className="glass-card" style={{ padding: '3rem', textAlign: 'center', color: '#64748b' }}>
+            <div className="glass-card" style={{ padding: '3rem', textAlign: 'center', color: '#3D4A28' }}>
               <Lock size={32} style={{ margin: '0 auto 0.75rem auto', display: 'block', opacity: 0.5 }} />
               <p style={{ margin: 0, fontWeight: 500 }}>No badges configured in the database.</p>
             </div>
@@ -1039,7 +1070,7 @@ export const GamificationPage: React.FC = () => {
                       textAlign: 'center',
                       gap: '0.75rem',
                       opacity: b.earned ? 1 : 0.6,
-                      border: b.earned ? '1px solid rgba(34, 197, 94, 0.4)' : '1px solid rgba(255, 255, 255, 0.08)',
+                      border: b.earned ? '1px solid rgba(34, 197, 94, 0.4)' : '1px solid rgba(25, 53, 12, 0.08)',
                       boxShadow: b.earned ? '0 0 20px rgba(34, 197, 94, 0.1)' : 'none'
                     }}
                   >
@@ -1050,16 +1081,15 @@ export const GamificationPage: React.FC = () => {
 
                     {/* Badge Details */}
                     <div>
-                      <h4 style={{ fontSize: '0.95rem', fontWeight: 700, color: '#f1f5f9', margin: '0 0 4px 0' }}>
+                      <h4 style={{ fontSize: '0.95rem', fontWeight: 700, color: '#19350C', margin: '0 0 4px 0' }}>
                         {b.name}
                       </h4>
-                      <p style={{ fontSize: '0.75rem', color: '#94a3b8', margin: 0, lineHeight: 1.3 }}>
+                      <p style={{ fontSize: '0.75rem', color: '#3D4A28', margin: 0, lineHeight: 1.3 }}>
                         {b.description}
                       </p>
                     </div>
 
-                    {/* Rule */}
-                    <span style={{ fontSize: '0.7rem', color: '#64748b', fontWeight: 600, display: 'block', marginTop: 'auto' }}>
+                    <span style={{ fontSize: '0.7rem', color: '#687D31', fontWeight: 600, display: 'block', marginTop: 'auto' }}>
                       {ruleLabel}
                     </span>
 
@@ -1110,10 +1140,10 @@ export const GamificationPage: React.FC = () => {
           {/* Rewards Top Bar */}
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '1rem' }}>
             <div>
-              <h2 style={{ fontSize: '1.25rem', fontWeight: 800, color: '#f1f5f9', margin: 0 }}>
+              <h2 style={{ fontSize: '1.25rem', fontWeight: 800, color: '#19350C', margin: 0 }}>
                 Eco Merch Store
               </h2>
-              <p style={{ fontSize: '0.85rem', color: '#94a3b8', margin: '4px 0 0 0' }}>
+              <p style={{ fontSize: '0.85rem', color: '#3D4A28', margin: '4px 0 0 0' }}>
                 Exchange points earned from sustainable activities for premium carbon-neutral merchandise.
               </p>
             </div>
@@ -1141,7 +1171,7 @@ export const GamificationPage: React.FC = () => {
               ))}
             </div>
           ) : rewards.length === 0 ? (
-            <div className="glass-card" style={{ padding: '3rem', textAlign: 'center', color: '#64748b' }}>
+            <div className="glass-card" style={{ padding: '3rem', textAlign: 'center', color: '#3D4A28' }}>
               <Gift size={32} style={{ margin: '0 auto 0.75rem auto', display: 'block', opacity: 0.5 }} />
               <p style={{ margin: 0, fontWeight: 500 }}>No active rewards listed in the store.</p>
             </div>
@@ -1158,7 +1188,7 @@ export const GamificationPage: React.FC = () => {
                       
                       {/* Title & Badge */}
                       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: '0.5rem' }}>
-                        <h3 style={{ fontSize: '1.05rem', fontWeight: 700, color: '#f1f5f9', margin: 0 }}>
+                        <h3 style={{ fontSize: '1.05rem', fontWeight: 700, color: '#19350C', margin: 0 }}>
                           {reward.name}
                         </h3>
                         <span style={{ fontSize: '0.95rem', fontWeight: 800, color: '#f59e0b', whiteSpace: 'nowrap' }}>
@@ -1167,13 +1197,13 @@ export const GamificationPage: React.FC = () => {
                       </div>
 
                       {/* Description */}
-                      <p style={{ fontSize: '0.85rem', color: '#94a3b8', margin: 0, lineHeight: 1.4, flex: 1 }}>
+                      <p style={{ fontSize: '0.85rem', color: '#3D4A28', margin: 0, lineHeight: 1.4, flex: 1 }}>
                         {reward.description}
                       </p>
 
                       {/* Stock Info Row */}
                       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '0.75rem' }}>
-                        <span style={{ color: '#64748b' }}>Availability:</span>
+                        <span style={{ color: '#687D31' }}>Availability:</span>
                         {reward.stock > 0 ? (
                           <span style={{ color: '#22c55e', fontWeight: 600 }}>{reward.stock} remaining</span>
                         ) : (

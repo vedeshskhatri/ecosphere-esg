@@ -423,23 +423,27 @@ export const SettingsPage: React.FC = () => {
           display: flex;
           align-items: center;
           gap: 0.5rem;
-          padding: 0.75rem 1.25rem;
-          font-family: var(--font-display);
+          padding: 0.5rem 1rem;
+          font-family: var(--font-body);
           font-size: var(--text-sm);
           font-weight: 500;
-          color: var(--text-muted);
-          border-bottom: 2px solid transparent;
+          color: #3D4A28;
+          border: none;
+          background: transparent;
+          border-radius: 8px;
           cursor: pointer;
-          transition: all 0.2s ease;
+          transition: all 0.18s ease;
+          outline: none;
         }
         .glass-tab:hover {
-          color: var(--text-primary);
-          background: rgba(255, 255, 255, 0.02);
+          color: #19350C;
+          background: rgba(25, 53, 12, 0.05);
         }
         .glass-tab.active {
-          color: var(--text-primary);
-          border-bottom-color: var(--env);
-          background: rgba(34, 197, 94, 0.05);
+          color: #19350C;
+          background: #ffffff;
+          font-weight: 600;
+          box-shadow: 0 1px 3px rgba(25, 53, 12, 0.08);
         }
         .dept-code-pill {
           font-family: var(--font-mono);
@@ -475,7 +479,7 @@ export const SettingsPage: React.FC = () => {
       </div>
 
       {/* Navigation tabs */}
-      <div className="tab-bar" style={{ display: 'flex', gap: '0.25rem' }}>
+      <div className="tab-bar" style={{ display: 'flex', gap: '0.25rem', background: '#EEECEA', padding: '3px', borderRadius: '9px', border: '1px solid rgba(25,53,12,0.12)', width: 'fit-content', marginBottom: '1.5rem' }}>
         <button
           id="tab-departments"
           className={`glass-tab ${activeTab === 'departments' ? 'active' : ''}`}

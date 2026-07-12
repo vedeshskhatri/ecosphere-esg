@@ -1,4 +1,5 @@
 import React, { useEffect, useState, useCallback } from 'react';
+import { useLocation, useNavigate } from 'react-router-dom';
 import api from '../../lib/api';
 import { useAuthStore } from '../../store/authStore';
 import {
@@ -9,12 +10,32 @@ import toast from 'react-hot-toast';
 export const SocialPage: React.FC = () => {
   const { user } = useAuthStore();
   const isAdminOrManager = user?.role === 'ADMIN' || user?.role === 'MANAGER';
+  const location = useLocation();
+  const navigate = useNavigate();
+
+  const getTabFromPath = (): 'activities' | 'approvals' | 'diversity' => {
+    const path = location.pathname;
+    if (path.includes('/approvals')) return 'approvals';
+    if (path.includes('/diversity')) return 'diversity';
+    return 'activities';
+  };
 
   // Component States
   const [activities, setActivities] = useState<any[]>([]);
   const [participations, setParticipations] = useState<any[]>([]);
   const [categories, setCategories] = useState<any[]>([]);
-  const [activeTab, setActiveTab] = useState<'activities' | 'approvals' | 'diversity'>('activities');
+  const [activeTab, setActiveTab] = useState<'activities' | 'approvals' | 'diversity'>(getTabFromPath());
+
+  useEffect(() => {
+    setActiveTab(getTabFromPath());
+  }, [location.pathname]);
+
+  const handleTabChange = (tab: 'activities' | 'approvals' | 'diversity') => {
+    setActiveTab(tab);
+    if (tab === 'activities') navigate('/social/activities');
+    else if (tab === 'approvals') navigate('/social/approvals');
+    else if (tab === 'diversity') navigate('/social/diversity');
+  };
   const [loading, setLoading] = useState<boolean>(true);
 
   // Modals Toggle States
@@ -201,15 +222,15 @@ export const SocialPage: React.FC = () => {
       {/* Custom Styles */}
       <style>{`
         .glass-card {
-          background: rgba(22, 26, 35, 0.85);
-          backdrop-filter: blur(12px);
-          border: 1px solid rgba(255, 255, 255, 0.08);
-          border-radius: 16px;
-          transition: transform 0.25s ease, box-shadow 0.25s ease;
+          background: #ffffff;
+          border: 1px solid rgba(25,53,12,0.10);
+          border-radius: 14px;
+          box-shadow: 0 1px 4px rgba(25,53,12,0.06), 0 2px 12px rgba(25,53,12,0.04);
+          transition: transform 0.22s ease, box-shadow 0.22s ease;
         }
         .glass-card:hover {
           transform: translateY(-2px);
-          box-shadow: 0 12px 30px rgba(0, 0, 0, 0.4);
+          box-shadow: 0 4px 20px rgba(25,53,12,0.10);
         }
         .text-truncate-2 {
           display: -webkit-box;
@@ -221,19 +242,21 @@ export const SocialPage: React.FC = () => {
         .tab-btn {
           background: none;
           border: none;
-          font-weight: 600;
-          font-size: 0.95rem;
-          color: #94a3b8;
+          font-weight: 500;
+          font-size: 0.875rem;
+          color: #687D31;
           cursor: pointer;
-          padding: 0.75rem 1rem;
+          padding: 0.625rem 0.875rem;
           position: relative;
-          transition: color 0.2s;
+          transition: color 0.15s;
+          font-family: 'Inter', sans-serif;
         }
         .tab-btn:hover {
-          color: #f1f5f9;
+          color: #19350C;
         }
         .tab-btn.active {
-          color: #3b82f6;
+          color: #19350C;
+          font-weight: 600;
         }
         .tab-btn.active::after {
           content: '';
@@ -241,12 +264,12 @@ export const SocialPage: React.FC = () => {
           bottom: 0;
           left: 0;
           right: 0;
-          height: 3px;
-          background: #3b82f6;
+          height: 2px;
+          background: #687D31;
           border-radius: 999px;
         }
         .shimmer-anim {
-          background: linear-gradient(90deg, rgba(255,255,255,0.03) 25%, rgba(255,255,255,0.08) 37%, rgba(255,255,255,0.03) 63%);
+          background: linear-gradient(90deg, #f0ede9 25%, #e8e4df 37%, #f0ede9 63%);
           background-size: 400% 100%;
           animation: shimmer-load 1.4s ease infinite;
         }
@@ -255,18 +278,19 @@ export const SocialPage: React.FC = () => {
           100% { background-position: 0% 50%; }
         }
         .form-input {
-          background: rgba(0, 0, 0, 0.35);
-          border: 1px solid rgba(255, 255, 255, 0.1);
+          background: #ffffff;
+          border: 1px solid rgba(25,53,12,0.18);
           border-radius: 8px;
-          color: #f1f5f9;
-          padding: 0.65rem 0.75rem;
-          font-size: 0.9rem;
+          color: #19350C;
+          padding: 0.6rem 0.75rem;
+          font-size: 0.875rem;
           width: 100%;
           outline: none;
-          transition: border-color 0.2s;
+          transition: border-color 0.18s;
+          font-family: 'Inter', sans-serif;
         }
         .form-input:focus {
-          border-color: #3b82f6;
+          border-color: #687D31;
         }
         .glass-table {
           width: 100%;
@@ -274,46 +298,46 @@ export const SocialPage: React.FC = () => {
           text-align: left;
         }
         .glass-table th {
-          color: #64748b;
+          color: #687D31;
           font-weight: 600;
-          font-size: 0.75rem;
+          font-size: 0.7rem;
           text-transform: uppercase;
-          letter-spacing: 0.05em;
-          padding: 1rem;
-          border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+          letter-spacing: 0.06em;
+          padding: 0.875rem 1rem;
+          border-bottom: 1px solid rgba(25,53,12,0.10);
         }
         .glass-table td {
-          padding: 1.25rem 1rem;
-          border-bottom: 1px solid rgba(255, 255, 255, 0.04);
-          color: #94a3b8;
-          font-size: 0.9rem;
+          padding: 1.125rem 1rem;
+          border-bottom: 1px solid rgba(25,53,12,0.06);
+          color: #3D4A28;
+          font-size: 0.875rem;
         }
         .glass-table tr:last-child td {
           border-bottom: none;
         }
         .glass-table tr:hover td {
-          background: rgba(255, 255, 255, 0.02);
+          background: rgba(104,125,49,0.04);
         }
       `}</style>
 
       {/* Tabs Menu */}
-      <div style={{ display: 'flex', gap: '1.5rem', borderBottom: '1px solid rgba(255,255,255,0.08)', marginBottom: '2.5rem' }}>
+      <div style={{ display: 'flex', gap: '0.25rem', borderBottom: '1px solid rgba(25,53,12,0.10)', marginBottom: '2rem' }}>
         <button
-          onClick={() => setActiveTab('activities')}
+          onClick={() => handleTabChange('activities')}
           className={`tab-btn ${activeTab === 'activities' ? 'active' : ''}`}
         >
           CSR Activities
         </button>
         {isAdminOrManager && (
           <button
-            onClick={() => setActiveTab('approvals')}
+            onClick={() => handleTabChange('approvals')}
             className={`tab-btn ${activeTab === 'approvals' ? 'active' : ''}`}
           >
             Approval Queue
           </button>
         )}
         <button
-          onClick={() => setActiveTab('diversity')}
+          onClick={() => handleTabChange('diversity')}
           className={`tab-btn ${activeTab === 'diversity' ? 'active' : ''}`}
         >
           Diversity Dashboard
@@ -326,10 +350,10 @@ export const SocialPage: React.FC = () => {
           {/* Header Row */}
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem' }}>
             <div>
-              <h1 style={{ color: '#f1f5f9', fontWeight: 800, fontSize: '1.5rem', margin: 0 }}>
+              <h1 style={{ color: '#19350C', fontWeight: 700, fontSize: '1.375rem', margin: 0 }}>
                 CSR Activities
               </h1>
-              <p style={{ color: '#94a3b8', fontSize: '0.875rem', margin: '4px 0 0 0' }}>
+              <p style={{ color: '#687D31', fontSize: '0.875rem', margin: '4px 0 0 0' }}>
                 Join social responsibility programs and earn rewarding points.
               </p>
             </div>
@@ -337,7 +361,7 @@ export const SocialPage: React.FC = () => {
               <button
                 onClick={() => setShowNewActivityModal(true)}
                 style={{
-                  background: '#3b82f6',
+                  background: '#687D31',
                   color: '#fff',
                   border: 'none',
                   borderRadius: '8px',
@@ -348,7 +372,6 @@ export const SocialPage: React.FC = () => {
                   alignItems: 'center',
                   gap: '6px',
                   cursor: 'pointer',
-                  boxShadow: '0 4px 12px rgba(59, 130, 246, 0.25)',
                   transition: 'background-color 0.2s'
                 }}
               >
@@ -376,31 +399,33 @@ export const SocialPage: React.FC = () => {
                 const isDeadlineMissed = act.deadline && new Date(act.deadline) < new Date();
                 return (
                   <div key={act.id} className="glass-card" style={{ overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>
-                    {/* Top colored line indicator */}
-                    <div style={{ height: '4px', background: '#3b82f6', width: '100%' }} />
+                    {/* Top accent line */}
+                    <div style={{ height: '3px', background: '#687D31', width: '100%' }} />
 
                     {/* Card Content */}
-                    <div style={{ padding: '1.25rem', flex: 1, display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+                    <div style={{ padding: '1.125rem', flex: 1, display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
                       {/* Header row */}
                       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                         <span style={{
-                          background: 'rgba(59, 130, 246, 0.15)',
-                          color: '#3b82f6',
-                          fontSize: '0.75rem',
+                          background: 'rgba(104,125,49,0.12)',
+                          color: '#687D31',
+                          fontSize: '0.7rem',
                           fontWeight: 600,
                           borderRadius: '999px',
-                          padding: '2px 10px'
+                          padding: '2px 9px',
+                          textTransform: 'uppercase',
+                          letterSpacing: '0.04em',
                         }}>
                           {act.category?.name || 'CSR'}
                         </span>
                         {act.evidenceRequired && (
                           <span style={{
-                            background: 'rgba(245, 158, 11, 0.15)',
-                            color: '#f59e0b',
-                            fontSize: '0.75rem',
+                            background: 'rgba(138,106,40,0.12)',
+                            color: '#8A6A28',
+                            fontSize: '0.7rem',
                             fontWeight: 600,
                             borderRadius: '999px',
-                            padding: '2px 10px',
+                            padding: '2px 9px',
                             display: 'flex',
                             alignItems: 'center',
                             gap: '4px'
@@ -411,22 +436,22 @@ export const SocialPage: React.FC = () => {
                       </div>
 
                       {/* Title */}
-                      <h3 style={{ color: '#f1f5f9', fontWeight: 700, fontSize: '1rem', margin: 0 }}>
+                      <h3 style={{ color: '#19350C', fontWeight: 600, fontSize: '0.9375rem', margin: 0, lineHeight: 1.3 }}>
                         {act.title}
                       </h3>
 
                       {/* Description */}
-                      <p className="text-truncate-2" style={{ color: '#94a3b8', fontSize: '0.875rem', margin: 0, lineHeight: 1.5, flex: 1 }}>
+                      <p className="text-truncate-2" style={{ color: '#687D31', fontSize: '0.8125rem', margin: 0, lineHeight: 1.55, flex: 1 }}>
                         {act.description}
                       </p>
 
                       {/* Details row */}
-                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingTop: '0.5rem', borderTop: '1px solid rgba(255, 255, 255, 0.05)' }}>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '4px', color: '#f59e0b', fontSize: '0.85rem', fontWeight: 700 }}>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingTop: '0.625rem', borderTop: '1px solid rgba(25,53,12,0.08)' }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '4px', color: '#8A6A28', fontSize: '0.8125rem', fontWeight: 600 }}>
                           <Award size={16} />
                           <span>⚡ {act.xpReward} XP</span>
                         </div>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '4px', color: '#64748b', fontSize: '0.75rem' }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '4px', color: '#687D31', fontSize: '0.75rem' }}>
                           <Clock size={12} />
                           <span>
                             {act.deadline ? new Date(act.deadline).toLocaleDateString() : 'No Deadline'}
@@ -438,23 +463,23 @@ export const SocialPage: React.FC = () => {
                       <div style={{ marginTop: '0.5rem' }}>
                         {act.status === 'DRAFT' ? (
                           <div style={{
-                            background: 'rgba(255, 255, 255, 0.05)',
-                            color: '#64748b',
-                            padding: '0.5rem',
-                            borderRadius: '8px',
-                            fontSize: '0.875rem',
-                            fontWeight: 600,
+                            background: 'rgba(25,53,12,0.06)',
+                            color: '#687D31',
+                            padding: '0.45rem',
+                            borderRadius: '7px',
+                            fontSize: '0.8125rem',
+                            fontWeight: 500,
                             textAlign: 'center'
                           }}>
                             Draft
                           </div>
                         ) : act.joinStatus === 'PENDING' ? (
                           <div style={{
-                            background: 'rgba(245, 158, 11, 0.15)',
-                            color: '#f59e0b',
-                            padding: '0.5rem',
-                            borderRadius: '8px',
-                            fontSize: '0.875rem',
+                            background: 'rgba(138,106,40,0.10)',
+                            color: '#8A6A28',
+                            padding: '0.45rem',
+                            borderRadius: '7px',
+                            fontSize: '0.8125rem',
                             fontWeight: 600,
                             textAlign: 'center'
                           }}>
@@ -462,11 +487,11 @@ export const SocialPage: React.FC = () => {
                           </div>
                         ) : act.joinStatus === 'APPROVED' ? (
                           <div style={{
-                            background: 'rgba(34, 197, 94, 0.15)',
-                            color: '#22c55e',
-                            padding: '0.5rem',
-                            borderRadius: '8px',
-                            fontSize: '0.875rem',
+                            background: 'rgba(104,125,49,0.12)',
+                            color: '#687D31',
+                            padding: '0.45rem',
+                            borderRadius: '7px',
+                            fontSize: '0.8125rem',
                             fontWeight: 600,
                             textAlign: 'center'
                           }}>
@@ -474,11 +499,11 @@ export const SocialPage: React.FC = () => {
                           </div>
                         ) : act.joinStatus === 'REJECTED' ? (
                           <div style={{
-                            background: 'rgba(239, 68, 68, 0.15)',
-                            color: '#ef4444',
-                            padding: '0.5rem',
-                            borderRadius: '8px',
-                            fontSize: '0.875rem',
+                            background: 'rgba(180,30,30,0.08)',
+                            color: '#b44040',
+                            padding: '0.45rem',
+                            borderRadius: '7px',
+                            fontSize: '0.8125rem',
                             fontWeight: 600,
                             textAlign: 'center'
                           }}>
@@ -489,7 +514,7 @@ export const SocialPage: React.FC = () => {
                             onClick={() => setShowJoinModal({ open: true, activity: act })}
                             style={{
                               width: '100%',
-                              background: '#3b82f6',
+                              background: '#687D31',
                               color: '#fff',
                               border: 'none',
                               padding: '0.5rem 1rem',
@@ -497,7 +522,6 @@ export const SocialPage: React.FC = () => {
                               fontWeight: 600,
                               fontSize: '0.875rem',
                               cursor: 'pointer',
-                              boxShadow: '0 4px 12px rgba(59, 130, 246, 0.15)',
                               transition: 'background-color 0.2s'
                             }}
                           >
@@ -505,12 +529,12 @@ export const SocialPage: React.FC = () => {
                           </button>
                         ) : (
                           <div style={{
-                            background: 'rgba(255, 255, 255, 0.03)',
-                            color: '#64748b',
-                            padding: '0.5rem',
-                            borderRadius: '8px',
-                            fontSize: '0.875rem',
-                            fontWeight: 600,
+                            background: 'rgba(25,53,12,0.05)',
+                            color: '#687D31',
+                            padding: '0.45rem',
+                            borderRadius: '7px',
+                            fontSize: '0.8125rem',
+                            fontWeight: 500,
                             textAlign: 'center'
                           }}>
                             Activity Ended
@@ -529,7 +553,7 @@ export const SocialPage: React.FC = () => {
       {/* APPROVAL QUEUE TAB (ADMIN/MANAGER ONLY) */}
       {activeTab === 'approvals' && isAdminOrManager && (
         <div className="glass-card" style={{ padding: '1.5rem', overflow: 'hidden' }}>
-          <h2 style={{ color: '#f1f5f9', fontWeight: 800, fontSize: '1.25rem', marginBottom: '1.25rem', marginTop: 0 }}>
+          <h2 style={{ color: '#19350C', fontWeight: 800, fontSize: '1.25rem', marginBottom: '1.25rem', marginTop: 0 }}>
             Approval Queue
           </h2>
 
@@ -540,7 +564,7 @@ export const SocialPage: React.FC = () => {
               ))}
             </div>
           ) : participations.length === 0 ? (
-            <div style={{ padding: '2rem', textAlign: 'center', color: '#64748b' }}>
+            <div style={{ padding: '2rem', textAlign: 'center', color: '#3D4A28' }}>
               <CheckCircle size={32} style={{ marginBottom: '0.5rem', color: '#22c55e' }} />
               <p style={{ margin: 0, fontWeight: 500 }}>All queues are clear! No pending CSR approvals.</p>
             </div>
@@ -560,10 +584,10 @@ export const SocialPage: React.FC = () => {
                 <tbody>
                   {participations.map(part => (
                     <tr key={part.id}>
-                      <td style={{ color: '#f1f5f9', fontWeight: 700 }}>
+                      <td style={{ color: '#19350C', fontWeight: 700 }}>
                         {part.employeeName}
                       </td>
-                      <td>{part.activityTitle}</td>
+                      <td style={{ color: '#3D4A28' }}>{part.activityTitle}</td>
                       <td>
                         {part.proofUrl ? (
                           <a
@@ -571,7 +595,7 @@ export const SocialPage: React.FC = () => {
                             target="_blank"
                             rel="noopener noreferrer"
                             style={{
-                              color: '#3b82f6',
+                              color: '#3d6c8a',
                               textDecoration: 'none',
                               fontWeight: 600,
                               display: 'inline-flex',
@@ -582,7 +606,7 @@ export const SocialPage: React.FC = () => {
                             <FileText size={14} /> View Proof
                           </a>
                         ) : (
-                          <span style={{ color: '#64748b', fontSize: '0.85rem' }}>No proof</span>
+                          <span style={{ color: '#687D31', fontSize: '0.85rem' }}>No proof</span>
                         )}
                       </td>
                       <td style={{ color: '#f59e0b', fontWeight: 700 }}>
@@ -654,15 +678,16 @@ export const SocialPage: React.FC = () => {
       {/* DIVERSITY DASHBOARD TAB */}
       {activeTab === 'diversity' && (
         <div className="glass-card" style={{ padding: '3rem', textAlign: 'center', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }}>
-          <Users size={48} style={{ color: '#64748b', marginBottom: '1rem' }} />
-          <h2 style={{ color: '#f1f5f9', fontWeight: 800, fontSize: '1.25rem', margin: '0 0 0.5rem 0' }}>
+          <Users size={48} style={{ color: '#687D31', marginBottom: '1rem' }} />
+          <h2 style={{ color: '#19350C', fontWeight: 800, fontSize: '1.25rem', margin: '0 0 0.5rem 0' }}>
             Diversity Dashboard
           </h2>
-          <p style={{ color: '#94a3b8', fontSize: '0.9rem', maxWidth: '380px', margin: 0, lineHeight: 1.5 }}>
+          <p style={{ color: '#3D4A28', fontSize: '0.9rem', maxWidth: '380px', margin: 0, lineHeight: 1.5 }}>
             Diversity metrics coming soon — powered by HR integration.
           </p>
         </div>
       )}
+
 
       {/* JOIN ACTIVITY MODAL */}
       {showJoinModal.open && showJoinModal.activity && (

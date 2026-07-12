@@ -67,10 +67,10 @@ export const ReportsPage: React.FC = () => {
     <div style={{ display: 'flex', flexDirection: 'column', gap: '2rem' }}>
       {/* Title */}
       <div>
-        <h1 style={{ fontSize: 'var(--text-4xl)', fontWeight: '800', letterSpacing: '-0.02em', marginBottom: '0.25rem' }}>
+        <h1 style={{ fontSize: 'var(--text-2xl)', fontWeight: '700', letterSpacing: '-0.025em', margin: 0, color: '#19350C' }}>
           ESG Report Builder
         </h1>
-        <span style={{ fontSize: 'var(--text-sm)', color: 'var(--text-muted)' }}>
+        <span style={{ fontSize: 'var(--text-sm)', color: '#687D31', marginTop: '2px', display: 'inline-block' }}>
           Compile compliance disclosures, audit reports, and download environmental CSV datasets.
         </span>
       </div>

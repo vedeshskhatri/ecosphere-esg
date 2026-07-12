@@ -1,4 +1,5 @@
 import { create } from 'zustand';
+import api from '../lib/api';
 
 export interface User {
   id: string;
@@ -19,6 +20,7 @@ interface AuthState {
   login: (user: User, token: string) => void;
   logout: () => void;
   setUser: (user: User) => void;
+  fetchCurrentUser: () => Promise<void>;
 }
 
 export const useAuthStore = create<AuthState>((set) => {
@@ -54,6 +56,17 @@ export const useAuthStore = create<AuthState>((set) => {
     setUser: (user) => {
       localStorage.setItem('ecosphere_user', JSON.stringify(user));
       set({ user });
+    },
+    fetchCurrentUser: async () => {
+      try {
+        const res = await api.get('/auth/me');
+        if (res.data?.success) {
+          localStorage.setItem('ecosphere_user', JSON.stringify(res.data.data));
+          set({ user: res.data.data });
+        }
+      } catch (err) {
+        console.error('Failed to fetch current user:', err);
+      }
     },
   };
 });

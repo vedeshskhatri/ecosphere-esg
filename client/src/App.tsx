@@ -148,6 +148,7 @@ const AuthenticatedLayout: React.FC = () => {
   const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
 
   const user = useAuthStore((state) => state.user);
+  const fetchCurrentUser = useAuthStore((state) => state.fetchCurrentUser);
   const setNotifications = useNotificationStore((state) => state.setNotifications);
   const addNotification = useNotificationStore((state) => state.addNotification);
   const unreadCount = useNotificationStore((state) => state.unreadCount);
@@ -168,6 +169,7 @@ const AuthenticatedLayout: React.FC = () => {
     if (!user) return;
 
     socket.connect();
+    fetchCurrentUser();
 
     const fetchNotifications = async () => {
       try {
@@ -193,7 +195,7 @@ const AuthenticatedLayout: React.FC = () => {
       socket.off('badge:awarded');
       socket.disconnect();
     };
-  }, [user, setNotifications, addNotification]);
+  }, [user?.id, setNotifications, addNotification]);
 
   // Close mobile sidebar on route change
   const handleMobileClose = () => setMobileSidebarOpen(false);

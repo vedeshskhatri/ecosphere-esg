@@ -35,9 +35,9 @@ const NAV_SECTIONS: NavSection[] = [
   {
     id: 'env',
     label: 'Environmental',
-    color: 'var(--env)',
-    accentRgb: '74, 90, 53',
-    icon: <Leaf size={17} />,
+    color: '#8EAA50',
+    accentRgb: '104, 125, 49',
+    icon: <Leaf size={16} />,
     links: [
       { label: 'Emission Factors', to: '/environmental/factors' },
       { label: 'Carbon Log',       to: '/environmental/transactions' },
@@ -47,9 +47,9 @@ const NAV_SECTIONS: NavSection[] = [
   {
     id: 'social',
     label: 'Social',
-    color: 'var(--social)',
-    accentRgb: '107, 114, 73',
-    icon: <Users size={17} />,
+    color: '#6FA9BB',
+    accentRgb: '64, 103, 104',
+    icon: <Users size={16} />,
     links: [
       { label: 'CSR Activities', to: '/social/activities' },
       { label: 'Approval Queue', to: '/social/approvals' },
@@ -58,9 +58,9 @@ const NAV_SECTIONS: NavSection[] = [
   {
     id: 'gov',
     label: 'Governance',
-    color: 'var(--gov)',
+    color: '#A8B890',
     accentRgb: '138, 118, 80',
-    icon: <Shield size={17} />,
+    icon: <Shield size={16} />,
     links: [
       { label: 'Policies',          to: '/governance/policies' },
       { label: 'Audits',            to: '/governance/audits' },
@@ -70,9 +70,9 @@ const NAV_SECTIONS: NavSection[] = [
   {
     id: 'gamify',
     label: 'Gamification',
-    color: 'var(--gamify)',
+    color: '#CFBB99',
     accentRgb: '192, 137, 90',
-    icon: <Trophy size={17} />,
+    icon: <Trophy size={16} />,
     links: [
       { label: 'Challenges',       to: '/gamification/challenges' },
       { label: 'My Badges',        to: '/gamification/badges' },
@@ -139,19 +139,18 @@ const SidebarInner: React.FC<SidebarProps> = ({ toggleNotifications, isMobileOpe
           display: 'flex',
           alignItems: 'center',
           justifyContent: open ? 'space-between' : 'center',
-          borderBottom: '1px solid var(--border)',
+          borderBottom: '1px solid rgba(25,53,12,0.10)',
           overflow: 'hidden',
           transition: 'justify-content 0.3s ease',
         }}
       >
         <div style={{ display: 'flex', alignItems: 'center', gap: open ? '0.625rem' : 0, overflow: 'hidden' }}>
           <div style={{
-            width: 32, height: 32, borderRadius: 9, flexShrink: 0,
-            background: 'linear-gradient(135deg, var(--env) 0%, #16a34a 100%)',
+            width: 28, height: 28, borderRadius: 8,
             display: 'flex', alignItems: 'center', justifyContent: 'center',
-            boxShadow: '0 0 16px var(--env-glow)',
+            overflow: 'hidden',
           }}>
-            <Leaf size={17} color="#000" />
+            <img src="/logo.png" alt="EcoSphere Logo" style={{ width: '100%', height: '100%', objectFit: 'contain', mixBlendMode: 'multiply' }} />
           </div>
           <AnimatePresence>
             {open && (
@@ -161,13 +160,11 @@ const SidebarInner: React.FC<SidebarProps> = ({ toggleNotifications, isMobileOpe
                 exit={{ opacity: 0, width: 0 }}
                 transition={{ duration: 0.22, ease: 'easeInOut' }}
                 style={{
-                  fontFamily: 'var(--font-display)',
+                  fontFamily: 'var(--font-body)',
                   fontSize: 'var(--text-lg)',
-                  fontWeight: 800,
-                  letterSpacing: '-0.03em',
-                  background: 'linear-gradient(135deg, #f1f5f9 40%, #94a3b8 100%)',
-                  WebkitBackgroundClip: 'text',
-                  WebkitTextFillColor: 'transparent',
+                  fontWeight: 700,
+                  letterSpacing: '-0.025em',
+                  color: 'var(--text-on-dark)',
                   whiteSpace: 'nowrap',
                   overflow: 'hidden',
                 }}
@@ -184,9 +181,9 @@ const SidebarInner: React.FC<SidebarProps> = ({ toggleNotifications, isMobileOpe
             onClick={onMobileClose}
             style={{
               padding: 4, borderRadius: 6,
-              background: 'rgba(255,255,255,0.06)',
-              border: '1px solid var(--border)',
-              color: 'var(--text-muted)', cursor: 'pointer',
+              background: 'rgba(25,53,12,0.06)',
+              border: '1px solid rgba(25,53,12,0.12)',
+              color: 'var(--text-on-dark-2)', cursor: 'pointer',
             }}
           >
             <X size={16} />
@@ -207,15 +204,15 @@ const SidebarInner: React.FC<SidebarProps> = ({ toggleNotifications, isMobileOpe
                 display: 'flex',
                 alignItems: 'center',
                 gap: '0.625rem',
-                padding: '0.55rem 0.75rem',
-                borderRadius: 9,
-                color: isActive ? '#fff' : 'var(--text-secondary)',
-                background: isActive ? 'rgba(255,255,255,0.07)' : 'transparent',
-                fontWeight: isActive ? 600 : 500,
+                padding: '0.5rem 0.75rem',
+                borderRadius: 8,
+                color: isActive ? 'var(--text-on-dark)' : 'var(--text-on-dark-2)',
+                background: isActive ? 'rgba(104,125,49,0.22)' : 'transparent',
+                fontWeight: isActive ? 600 : 400,
                 fontSize: 'var(--text-sm)',
                 fontFamily: 'var(--font-body)',
                 transition: 'all 0.18s ease',
-                boxShadow: isActive ? '0 0 0 1px rgba(255,255,255,0.08) inset' : 'none',
+                borderLeft: isActive ? '2px solid var(--mustard)' : '2px solid transparent',
                 textDecoration: 'none',
                 whiteSpace: 'nowrap',
                 overflow: 'hidden',
@@ -263,12 +260,13 @@ const SidebarInner: React.FC<SidebarProps> = ({ toggleNotifications, isMobileOpe
               to="/reports"
               style={({ isActive }) => ({
                 display: 'flex', alignItems: 'center', gap: '0.625rem',
-                padding: '0.55rem 0.75rem', borderRadius: 9,
-                color: isActive ? '#fff' : 'var(--text-secondary)',
-                background: isActive ? 'rgba(6,182,212,0.10)' : 'transparent',
-                fontWeight: isActive ? 600 : 500,
+                padding: '0.5rem 0.75rem', borderRadius: 8,
+                color: isActive ? 'var(--text-on-dark)' : 'var(--text-on-dark-2)',
+                background: isActive ? 'rgba(64,103,104,0.22)' : 'transparent',
+                fontWeight: isActive ? 600 : 400,
                 fontSize: 'var(--text-sm)', fontFamily: 'var(--font-body)',
                 transition: 'all 0.18s ease', textDecoration: 'none',
+                borderLeft: isActive ? '2px solid var(--deepspace)' : '2px solid transparent',
                 whiteSpace: 'nowrap', overflow: 'hidden',
                 justifyContent: open ? 'flex-start' : 'center',
               })}
@@ -284,12 +282,13 @@ const SidebarInner: React.FC<SidebarProps> = ({ toggleNotifications, isMobileOpe
               to="/settings"
               style={({ isActive }) => ({
                 display: 'flex', alignItems: 'center', gap: '0.625rem',
-                padding: '0.55rem 0.75rem', borderRadius: 9,
-                color: isActive ? '#fff' : 'var(--text-secondary)',
-                background: isActive ? 'rgba(255,255,255,0.06)' : 'transparent',
-                fontWeight: isActive ? 600 : 500,
+                padding: '0.5rem 0.75rem', borderRadius: 8,
+                color: isActive ? 'var(--text-on-dark)' : 'var(--text-on-dark-2)',
+                background: isActive ? 'rgba(255,255,255,0.08)' : 'transparent',
+                fontWeight: isActive ? 600 : 400,
                 fontSize: 'var(--text-sm)', fontFamily: 'var(--font-body)',
                 transition: 'all 0.18s ease', textDecoration: 'none',
+                borderLeft: isActive ? '2px solid var(--text-on-dark-2)' : '2px solid transparent',
                 whiteSpace: 'nowrap', overflow: 'hidden',
                 justifyContent: open ? 'flex-start' : 'center',
               })}
@@ -304,16 +303,16 @@ const SidebarInner: React.FC<SidebarProps> = ({ toggleNotifications, isMobileOpe
             <button
               onClick={toggleNotifications}
               style={{
-                width: '100%', display: 'flex', alignItems: 'center',
-                justifyContent: open ? 'space-between' : 'center',
-                gap: '0.625rem', padding: '0.55rem 0.75rem', borderRadius: 9,
-                color: 'var(--text-secondary)', background: 'transparent',
-                fontWeight: 500, fontSize: 'var(--text-sm)',
-                cursor: 'pointer', border: 'none', fontFamily: 'var(--font-body)',
-                transition: 'all 0.18s ease', overflow: 'hidden',
-              }}
-              onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.background = 'rgba(255,255,255,0.04)'; }}
-              onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.background = 'transparent'; }}
+              width: '100%', display: 'flex', alignItems: 'center',
+              justifyContent: open ? 'space-between' : 'center',
+              gap: '0.625rem', padding: '0.5rem 0.75rem', borderRadius: 8,
+              color: 'var(--text-on-dark-2)', background: 'transparent',
+              fontWeight: 400, fontSize: 'var(--text-sm)',
+              cursor: 'pointer', border: 'none', fontFamily: 'var(--font-body)',
+              transition: 'all 0.18s ease', overflow: 'hidden',
+            }}
+            onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.background = 'rgba(255,255,255,0.06)'; }}
+            onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.background = 'transparent'; }}
             >
               <div style={{ display: 'flex', alignItems: 'center', gap: '0.625rem', overflow: 'hidden' }}>
                 <Bell size={17} style={{ flexShrink: 0 }} />
@@ -345,20 +344,20 @@ const SidebarInner: React.FC<SidebarProps> = ({ toggleNotifications, isMobileOpe
       {user && (
         <div
           ref={footerRef}
-          style={{ padding: '0.75rem 0.5rem', borderTop: '1px solid var(--border)' }}
+          style={{ padding: '0.75rem 0.5rem', borderTop: '1px solid rgba(25,53,12,0.10)' }}
         >
           <div style={{
             display: 'flex', alignItems: 'center',
             gap: open ? '0.625rem' : 0,
             padding: '0.5rem 0.75rem', borderRadius: 10,
-            background: 'rgba(255,255,255,0.04)',
-            border: '1px solid var(--border)', marginBottom: '0.5rem',
+            background: 'rgba(25,53,12,0.05)',
+            border: '1px solid rgba(25,53,12,0.10)', marginBottom: '0.5rem',
             overflow: 'hidden',
             justifyContent: open ? 'flex-start' : 'center',
           }}>
             <div style={{
               width: 34, height: 34, borderRadius: '50%', flexShrink: 0,
-              background: 'linear-gradient(135deg, var(--env) 0%, var(--social) 100%)',
+              background: 'linear-gradient(135deg, var(--mustard) 0%, var(--deepspace) 100%)',
               display: 'flex', alignItems: 'center', justifyContent: 'center',
               fontSize: 13, fontWeight: 700, color: '#fff',
             }}>
@@ -373,7 +372,7 @@ const SidebarInner: React.FC<SidebarProps> = ({ toggleNotifications, isMobileOpe
                   transition={{ duration: 0.2 }}
                   style={{ minWidth: 0, overflow: 'hidden' }}
                 >
-                  <div style={{ fontWeight: 600, fontSize: 'var(--text-sm)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                  <div style={{ fontWeight: 600, fontSize: 'var(--text-sm)', color: 'var(--text-on-dark)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
                     {user.name}
                   </div>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '0.375rem', marginTop: 2 }}>
@@ -391,15 +390,15 @@ const SidebarInner: React.FC<SidebarProps> = ({ toggleNotifications, isMobileOpe
             style={{
               width: '100%', padding: open ? '0.45rem 0.75rem' : '0.45rem',
               display: 'flex', alignItems: 'center', justifyContent: open ? 'flex-start' : 'center',
-              gap: '0.5rem', borderRadius: 8,
-              background: 'rgba(255,255,255,0.04)',
-              border: '1px solid var(--border)',
-              color: 'var(--text-secondary)', cursor: 'pointer',
+              gap: '0.5rem', borderRadius: 6,
+              background: 'rgba(25,53,12,0.05)',
+              border: '1px solid rgba(25,53,12,0.10)',
+              color: 'var(--text-on-dark-2)', cursor: 'pointer',
               fontSize: 'var(--text-xs)', fontFamily: 'var(--font-body)',
               transition: 'all 0.18s ease',
             }}
-            onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.background = 'rgba(239,68,68,0.08)'; (e.currentTarget as HTMLElement).style.color = 'var(--severity-high)'; }}
-            onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.background = 'rgba(255,255,255,0.04)'; (e.currentTarget as HTMLElement).style.color = 'var(--text-secondary)'; }}
+            onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.background = 'rgba(180,48,48,0.12)'; (e.currentTarget as HTMLElement).style.color = '#c44040'; }}
+            onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.background = 'rgba(25,53,12,0.05)'; (e.currentTarget as HTMLElement).style.color = 'var(--text-on-dark-2)'; }}
           >
             <LogOut size={14} style={{ flexShrink: 0 }} />
             <AnimatePresence>{open && <motion.span initial={{ opacity: 0, width: 0 }} animate={{ opacity: 1, width: 'auto' }} exit={{ opacity: 0, width: 0 }} transition={{ duration: 0.18 }} style={{ overflow: 'hidden', whiteSpace: 'nowrap' }}>Sign Out</motion.span>}</AnimatePresence>
@@ -458,8 +457,6 @@ interface CollapsibleSectionProps {
 const CollapsibleSection: React.FC<CollapsibleSectionProps> = ({
   section, isOpen, onToggle, sidebarOpen, currentPath,
 }) => {
-  const isActiveSection = section.links.some((l) => currentPath.startsWith(l.to.split('/').slice(0, 2).join('/')));
-
   return (
     <li className="sidebar-nav-item" style={{ marginBottom: 2 }}>
       {/* Section header button */}
@@ -469,12 +466,12 @@ const CollapsibleSection: React.FC<CollapsibleSectionProps> = ({
         style={{
           width: '100%', display: 'flex', alignItems: 'center',
           justifyContent: sidebarOpen ? 'space-between' : 'center',
-          padding: sidebarOpen ? '0.5rem 0.75rem 0.5rem 1rem' : '0.5rem',
-          color: isActiveSection ? section.color : section.color,
-          fontSize: 'var(--text-xs)', fontWeight: 700,
-          textTransform: 'uppercase', letterSpacing: '0.08em',
+          padding: sidebarOpen ? '0.45rem 0.75rem 0.45rem 0.875rem' : '0.45rem',
+          color: section.color,
+          fontSize: '10px', fontWeight: 700,
+          textTransform: 'uppercase', letterSpacing: '0.09em',
           cursor: 'pointer', background: 'transparent', border: 'none',
-          fontFamily: 'var(--font-body)', borderRadius: 8,
+          fontFamily: 'var(--font-body)', borderRadius: 6,
           overflow: 'hidden',
         }}
       >
@@ -537,27 +534,20 @@ const CollapsibleSection: React.FC<CollapsibleSectionProps> = ({
                       alignItems: 'center',
                       justifyContent: sidebarOpen ? 'flex-start' : 'center',
                       gap: '0.5rem',
-                      padding: sidebarOpen ? '0.45rem 0.75rem' : '0.45rem',
-                      borderRadius: 8,
-                      color: isActive ? '#fff' : 'var(--text-secondary)',
-                      background: isActive ? `rgba(${section.accentRgb}, 0.12)` : 'transparent',
+                      padding: sidebarOpen ? '0.375rem 0.75rem 0.375rem 1.25rem' : '0.4rem',
+                      borderRadius: 6,
+                      color: isActive ? 'var(--text-on-dark)' : 'var(--text-on-dark-2)',
+                      background: isActive ? `rgba(${section.accentRgb}, 0.18)` : 'transparent',
                       fontWeight: isActive ? 600 : 400,
                       fontSize: 'var(--text-sm)',
                       fontFamily: 'var(--font-body)',
                       transition: 'all 0.15s ease',
-                      borderLeft: sidebarOpen ? (isActive ? `2px solid ${section.color}` : '2px solid transparent') : 'none',
+                      borderLeft: sidebarOpen ? (isActive ? `2px solid ${section.color}` : '2px solid rgba(25, 53, 12, 0.12)') : 'none',
                       textDecoration: 'none',
                       whiteSpace: 'nowrap',
                       overflow: 'hidden',
                     }}
                   >
-                    <span style={{
-                      width: sidebarOpen ? 5 : 8, height: sidebarOpen ? 5 : 8,
-                      borderRadius: '50%', background: section.color,
-                      flexShrink: 0, opacity: isActive ? 1 : 0.5,
-                      boxShadow: isActive ? `0 0 6px ${section.color}` : 'none',
-                      transition: 'all 0.15s ease',
-                    }} />
                     <AnimatePresence>
                       {sidebarOpen && (
                         <motion.span

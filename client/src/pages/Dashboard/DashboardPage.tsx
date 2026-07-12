@@ -356,20 +356,26 @@ export const DashboardPage: React.FC = () => {
         }}
       >
         <div>
-          <h1 style={{ fontSize: '1.875rem', fontWeight: 800, color: 'var(--text-primary)', margin: 0 }}>
-            Platform Overview
-          </h1>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+            <h1 style={{ fontSize: '1.875rem', fontWeight: 800, color: 'var(--text-primary)', margin: 0 }}>
+              Platform Overview
+            </h1>
+            <span
+              className={`dot ${isConnected ? 'dot-green' : 'dot-red'}`}
+              style={{
+                display: 'inline-block',
+                width: '8px',
+                height: '8px',
+                borderRadius: '50%',
+                background: isConnected ? '#22c55e' : '#ef4444',
+                boxShadow: isConnected ? '0 0 8px #22c55e' : '0 0 8px #ef4444',
+                marginTop: '4px',
+              }}
+            />
+          </div>
           <p style={{ fontSize: 'var(--text-sm)', color: 'var(--text-secondary)', margin: '0.25rem 0 0 0' }}>
             Real-time ESG intelligence and gamified compliance tracking.
           </p>
-        </div>
-        <div>
-          <div className="live-indicator">
-            <span className={`dot ${isConnected ? 'dot-green' : 'dot-red'}`} />
-            <span style={{ color: isConnected ? '#22c55e' : '#ef4444' }}>
-              {isConnected ? 'LIVE EVENT BUS CONNECTED' : 'DISCONNECTED'}
-            </span>
-          </div>
         </div>
       </motion.div>
 
@@ -399,15 +405,15 @@ export const DashboardPage: React.FC = () => {
           <div style={{ width: '100%', height: 250 }}>
             <ResponsiveContainer width="100%" height="100%">
               <LineChart data={emissionsTrend} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
-                <CartesianGrid stroke="rgba(255,255,255,0.05)" />
-                <XAxis dataKey="month" tick={{ fill: '#64748b', fontSize: 12 }} />
-                <YAxis tick={{ fill: '#64748b', fontSize: 12 }} />
+                <CartesianGrid stroke="rgba(25,53,12,0.08)" />
+                <XAxis dataKey="month" tick={{ fill: '#687D31', fontSize: 12 }} />
+                <YAxis tick={{ fill: '#687D31', fontSize: 12 }} />
                 <Tooltip
                   contentStyle={{
-                    background: '#161a23',
-                    border: '1px solid rgba(255,255,255,0.08)',
+                    background: '#ffffff',
+                    border: '1px solid rgba(25,53,12,0.12)',
                     borderRadius: 8,
-                    color: '#f1f5f9'
+                    color: '#19350C'
                   }}
                 />
                 <Line
@@ -431,15 +437,15 @@ export const DashboardPage: React.FC = () => {
           <div style={{ width: '100%', height: 250 }}>
             <ResponsiveContainer width="100%" height="100%">
               <BarChart data={formattedDeptScores} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
-                <CartesianGrid stroke="rgba(255,255,255,0.05)" />
-                <XAxis dataKey="name" tick={{ fill: '#64748b', fontSize: 12 }} />
-                <YAxis tick={{ fill: '#64748b', fontSize: 12 }} />
+                <CartesianGrid stroke="rgba(25,53,12,0.08)" />
+                <XAxis dataKey="name" tick={{ fill: '#687D31', fontSize: 12 }} />
+                <YAxis tick={{ fill: '#687D31', fontSize: 12 }} />
                 <Tooltip
                   contentStyle={{
-                    background: '#161a23',
-                    border: '1px solid rgba(255,255,255,0.08)',
+                    background: '#ffffff',
+                    border: '1px solid rgba(25,53,12,0.12)',
                     borderRadius: 8,
-                    color: '#f1f5f9'
+                    color: '#19350C'
                   }}
                 />
                 <Legend verticalAlign="top" height={36} iconType="circle" wrapperStyle={{ fontSize: '11px', color: '#64748b' }} />
@@ -462,7 +468,7 @@ export const DashboardPage: React.FC = () => {
 
           <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem', marginTop: '0.25rem' }}>
             {/* Row 1: Trees Saved */}
-            <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', padding: '0.75rem', background: 'rgba(255,255,255,0.03)', borderRadius: '10px' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', padding: '0.75rem', background: 'rgba(25,53,12,0.04)', borderRadius: '10px', border: '1px solid rgba(25,53,12,0.08)' }}>
               <span style={{ fontSize: '1.75rem' }}>🌳</span>
               <div style={{ display: 'flex', flexDirection: 'column' }}>
                 <span style={{ fontSize: '1.125rem', fontWeight: 800, color: 'var(--text-primary)' }}>
@@ -473,7 +479,7 @@ export const DashboardPage: React.FC = () => {
             </div>
 
             {/* Row 2: Flights Avoided */}
-            <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', padding: '0.75rem', background: 'rgba(255,255,255,0.03)', borderRadius: '10px' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', padding: '0.75rem', background: 'rgba(25,53,12,0.04)', borderRadius: '10px', border: '1px solid rgba(25,53,12,0.08)' }}>
               <span style={{ fontSize: '1.75rem' }}>✈️</span>
               <div style={{ display: 'flex', flexDirection: 'column' }}>
                 <span style={{ fontSize: '1.125rem', fontWeight: 800, color: 'var(--text-primary)' }}>
@@ -484,7 +490,7 @@ export const DashboardPage: React.FC = () => {
             </div>
 
             {/* Row 3: Volunteer Hours */}
-            <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', padding: '0.75rem', background: 'rgba(255,255,255,0.03)', borderRadius: '10px' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', padding: '0.75rem', background: 'rgba(25,53,12,0.04)', borderRadius: '10px', border: '1px solid rgba(25,53,12,0.08)' }}>
               <span style={{ fontSize: '1.75rem' }}>🕐</span>
               <div style={{ display: 'flex', flexDirection: 'column' }}>
                 <span style={{ fontSize: '1.125rem', fontWeight: 800, color: 'var(--text-primary)' }}>
