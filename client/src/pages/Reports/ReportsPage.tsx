@@ -93,10 +93,12 @@ export const ReportsPage: React.FC = () => {
         responseType: 'blob'
       });
       
-      const blob = new Blob([res.data], { type: 'text/csv;charset=utf-8;' });
+      const blob = res.data instanceof Blob ? res.data : new Blob([res.data], { type: 'text/csv;charset=utf-8;' });
       const url = window.URL.createObjectURL(blob);
       const link = document.createElement('a');
+      link.style.display = 'none';
       link.href = url;
+      link.download = `ecosphere_${reportType}_report.csv`;
       link.setAttribute('download', `ecosphere_${reportType}_report.csv`);
       document.body.appendChild(link);
       link.click();

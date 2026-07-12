@@ -355,25 +355,26 @@ export const DashboardPage: React.FC = () => {
           marginBottom: '1rem'
         }}
       >
-        <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
           <div style={{
-            width: '44px',
-            height: '44px',
+            width: '76px',
+            height: '76px',
             borderRadius: '50%',
             background: '#ffffff',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
-            padding: '5px',
+            padding: '2px',
             boxShadow: '0 2px 8px rgba(25,53,12,0.06)',
-            border: '1px solid rgba(25,53,12,0.08)'
+            border: '1px solid rgba(25,53,12,0.08)',
+            overflow: 'hidden'
           }}>
-            <img src="/logo.png" alt="EcoSphere Logo" style={{ width: '100%', height: '100%', objectFit: 'contain', mixBlendMode: 'multiply' }} />
+            <img src="/logo.png" alt="EcoSphere Logo" style={{ width: '100%', height: '100%', objectFit: 'contain', mixBlendMode: 'multiply', borderRadius: '50%' }} />
           </div>
           <div>
             <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
               <h1 style={{ fontSize: '1.875rem', fontWeight: 800, color: 'var(--text-primary)', margin: 0 }}>
-                Platform Overview
+                Eco Sphere
               </h1>
               <span
                 className={`dot ${isConnected ? 'dot-green' : 'dot-red'}`}
@@ -398,13 +399,13 @@ export const DashboardPage: React.FC = () => {
       {/* Section 2 — Score Rings */}
       <div className="dashboard-score-grid">
         <motion.div className="card" variants={cardVariants} style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '220px' }}>
-          <ScoreRing value={environmentalScore} color="#22c55e" label="Environmental" />
+          <ScoreRing value={environmentalScore} color="#687D31" label="Environmental" />
         </motion.div>
         <motion.div className="card" variants={cardVariants} style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '220px' }}>
-          <ScoreRing value={socialScore} color="#3b82f6" label="Social" />
+          <ScoreRing value={socialScore} color="#3d6c8a" label="Social" />
         </motion.div>
         <motion.div className="card" variants={cardVariants} style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '220px' }}>
-          <ScoreRing value={governanceScore} color="#a855f7" label="Governance" />
+          <ScoreRing value={governanceScore} color="#7d688a" label="Governance" />
         </motion.div>
         <motion.div className="card" variants={cardVariants} style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '220px' }}>
           <ScoreRing value={overallScore} color="#f1f5f9" label="Overall ESG" size={140} />
@@ -435,9 +436,9 @@ export const DashboardPage: React.FC = () => {
                 <Line
                   type="monotone"
                   dataKey="totalCo2"
-                  stroke="#22c55e"
+                  stroke="#687D31"
                   strokeWidth={2}
-                  dot={{ fill: '#22c55e', r: 4 }}
+                  dot={{ fill: '#687D31', r: 4 }}
                   activeDot={{ r: 6 }}
                 />
               </LineChart>
@@ -465,9 +466,9 @@ export const DashboardPage: React.FC = () => {
                   }}
                 />
                 <Legend verticalAlign="top" height={36} iconType="circle" wrapperStyle={{ fontSize: '11px', color: '#64748b' }} />
-                <Bar dataKey="Env Score" fill="#22c55e" radius={[4, 4, 0, 0]} />
-                <Bar dataKey="Social Score" fill="#3b82f6" radius={[4, 4, 0, 0]} />
-                <Bar dataKey="Gov Score" fill="#a855f7" radius={[4, 4, 0, 0]} />
+                <Bar dataKey="Env Score" fill="#687D31" radius={[4, 4, 0, 0]} />
+                <Bar dataKey="Social Score" fill="#3d6c8a" radius={[4, 4, 0, 0]} />
+                <Bar dataKey="Gov Score" fill="#7d688a" radius={[4, 4, 0, 0]} />
               </BarChart>
             </ResponsiveContainer>
           </div>

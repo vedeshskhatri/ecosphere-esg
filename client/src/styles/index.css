@@ -23,43 +23,43 @@
   --radius-xs:  4px;
 
   /* ── MODULE ACCENT COLORS ── */
-  --env:      #22c55e;   /* Environmental — green  */
-  --env-dim:  #15803d;
-  --env-glow: rgba(34, 197, 94, 0.15);
+  --env:      #687D31;   /* Environmental — Sage Green */
+  --env-dim:  #3D4A28;
+  --env-glow: rgba(104, 125, 49, 0.15);
 
-  --social:      #3b82f6; /* Social — blue */
-  --social-dim:  #1d4ed8;
-  --social-glow: rgba(59, 130, 246, 0.15);
+  --social:      #3d6c8a; /* Social — Muted Ocean Blue */
+  --social-dim:  #2a4e65;
+  --social-glow: rgba(61, 108, 138, 0.15);
 
-  --gov:      #a855f7;   /* Governance — purple */
-  --gov-dim:  #7e22ce;
-  --gov-glow: rgba(168, 85, 247, 0.15);
+  --gov:      #7d688a;   /* Governance — Muted Dusty Lavender */
+  --gov-dim:  #5a4863;
+  --gov-glow: rgba(125, 104, 138, 0.15);
 
-  --gamify:      #f97316; /* Gamification — orange */
-  --gamify-dim:  #c2410c;
-  --gamify-glow: rgba(249, 115, 22, 0.15);
+  --gamify:      #c89d58; /* Gamification — Muted Ochre Gold */
+  --gamify-dim:  #987339;
+  --gamify-glow: rgba(200, 157, 88, 0.15);
 
-  --insight:      #06b6d4; /* Smart Insights — cyan */
-  --insight-glow: rgba(6, 182, 212, 0.15);
+  --insight:      #5d8c83; /* Smart Insights — Muted Sage/Teal */
+  --insight-glow: rgba(93, 140, 131, 0.15);
 
   /* ── STATUS BADGES ── */
-  --status-active:    #22c55e;
-  --status-pending:   #f59e0b;
-  --status-review:    #3b82f6;
-  --status-completed: #6b7280;
-  --status-archived:  #374151;
-  --status-draft:     #475569;
+  --status-active:    #687D31;
+  --status-pending:   #c89d58;
+  --status-review:    #3d6c8a;
+  --status-completed: #64748b;
+  --status-archived:  #475569;
+  --status-draft:     #8c8275;
 
   /* Severity */
-  --severity-low:      #22c55e;
-  --severity-medium:   #f97316;
-  --severity-high:     #ef4444;
-  --severity-critical: #dc2626;
+  --severity-low:      #687D31;
+  --severity-medium:   #c89d58;
+  --severity-high:     #c84b4b;
+  --severity-critical: #a83b3b;
 
   /* Difficulty */
-  --diff-easy:   #22c55e;
-  --diff-medium: #f59e0b;
-  --diff-hard:   #ef4444;
+  --diff-easy:   #687D31;
+  --diff-medium: #c89d58;
+  --diff-hard:   #c84b4b;
 
   /* Typography sizes */
   --text-xs:   0.75rem;
