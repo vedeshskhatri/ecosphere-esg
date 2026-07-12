@@ -181,10 +181,21 @@ async function main() {
     data: { title: 'Carbon Neutral Office Operations', departmentId: corDept.id, targetCo2: 5000, currentCo2: 5000, deadline: new Date('2026-06-30'), status: 'COMPLETED' },
   });
 
+  // 7.5 Seeding Products
+  console.log('Seeding Products...');
+  const prod1 = await prisma.product.create({
+    data: { name: 'Eco-Friendly Bamboo Cup', sku: 'BAM-CUP-01', carbonFootprintCo2: 0.12, recyclable: true, materialsUsed: 'Bamboo Fiber, Cornstarch' }
+  });
+  const prod2 = await prisma.product.create({
+    data: { name: 'Recycled Plastic Notebook', sku: 'REC-NOTE-02', carbonFootprintCo2: 0.45, recyclable: true, materialsUsed: '100% Recycled PET Cover, FSC Certified Paper' }
+  });
+  const prod3 = await prisma.product.create({
+    data: { name: 'Organic Cotton Tote Bag', sku: 'ORG-TOTE-03', carbonFootprintCo2: 0.85, recyclable: false, materialsUsed: '100% Certified Organic Cotton' }
+  });
+
   // 8. Carbon Transactions (12 months of historical data)
   console.log('Seeding Carbon Transactions...');
   const depts = [mfgDept.id, logDept.id, corDept.id];
-  const scopes: EmissionScope[] = ['SCOPE1', 'SCOPE2', 'SCOPE3'];
   const efs = [efDiesel, efNaturalGas, efElectricity, efAirTravel, efPaper];
 
   const now = new Date();
@@ -196,6 +207,10 @@ async function main() {
         const factor = efs[(deptId.charCodeAt(0) + i + j) % efs.length];
         const quantity = 500 + Math.random() * 1000;
         const co2Kg = quantity * Number(factor.factorValue);
+        
+        // Link to product if applicable
+        const productId = j === 0 ? prod1.id : j === 1 ? prod2.id : null;
+
         await prisma.carbonTransaction.create({
           data: {
             departmentId: deptId,
@@ -208,6 +223,7 @@ async function main() {
             isAuto: Math.random() > 0.5,
             notes: `Seeded transaction for month -${i}`,
             createdById: adminUser.id,
+            productId: productId,
           },
         });
       }
