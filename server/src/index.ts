@@ -22,6 +22,7 @@ import dashboardRoutes from './routes/dashboard.routes';
 import reportsRoutes from './routes/reports.routes';
 import settingsRoutes from './routes/settings.routes';
 import productsRoutes from './routes/products.routes';
+import notificationsRoutes from './routes/notifications.routes';
 
 const app = express();
 const server = http.createServer(app);
@@ -66,6 +67,7 @@ app.use('/api/dashboard', dashboardRoutes);
 app.use('/api/reports', reportsRoutes);
 app.use('/api/settings', settingsRoutes);
 app.use('/api/products', productsRoutes);
+app.use('/api/notifications', notificationsRoutes);
 
 // Root route
 app.get('/', (req, res) => {
