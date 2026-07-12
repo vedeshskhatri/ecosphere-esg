@@ -11,6 +11,7 @@ import api from './lib/api';
 // Components
 import Sidebar from './components/Sidebar';
 import NotificationBell from './components/NotificationBell';
+import { SectionContextBar } from './components/SectionContextBar';
 
 // Pages
 import LoginPage from './pages/Auth/LoginPage';
@@ -216,6 +217,7 @@ const AuthenticatedLayout: React.FC = () => {
       {/* Main Content */}
       <main className="page-layout">
         <div className="page-content">
+          <SectionContextBar />
           <PageTransition>
             <Routes>
               <Route path="/"               element={<DashboardPage />} />
