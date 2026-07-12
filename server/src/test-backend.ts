@@ -1,4 +1,5 @@
 import axios from 'axios';
+import prisma from './lib/prisma';
 
 const BASE_URL = 'http://localhost:5000/api';
 
@@ -118,6 +119,66 @@ async function runTests() {
     console.log('✅ CSV Emissions Report: SUCCESS, fetched content lines:', res.data.split('\n').length);
   } catch (error: any) {
     console.error('❌ CSV Emissions Report failed:', error.response?.data || error.message);
+  }
+
+  // 13. Live Dashboard Data Test
+  let activeDeptId = '';
+  try {
+    const res = await axios.get(`${BASE_URL}/dashboard`, authHeaders);
+    console.log('✅ Live Dashboard: SUCCESS, orgScore total matches:', res.data.data.orgScore.totalScore);
+    console.log('   ↳ Found nudges:', res.data.data.nudges.length);
+    console.log('   ↳ Found smart insights:', res.data.data.smartInsights.length);
+    activeDeptId = res.data.data.departmentScores[0].id;
+  } catch (error: any) {
+    console.error('❌ Live Dashboard failed:', error.response?.data || error.message);
+  }
+
+  // 14. Department ESG DNA Radar Test
+  try {
+    const res = await axios.get(`${BASE_URL}/dashboard/department/${activeDeptId}/dna`, authHeaders);
+    console.log('✅ Dept ESG DNA Radar: SUCCESS, gathered dimensions:', res.data.data.dna.length);
+  } catch (error: any) {
+    console.error('❌ Dept ESG DNA Radar failed:', error.response?.data || error.message);
+  }
+
+  // 15. Challenges & QR Verification Test
+  let challengeId = '';
+  try {
+    const res = await axios.get(`${BASE_URL}/gamification/challenges`, authHeaders);
+    console.log('✅ Gamification Challenges: SUCCESS, found', res.data.data.length, 'challenges');
+    challengeId = res.data.data[0].id;
+  } catch (error: any) {
+    console.error('❌ Gamification Challenges failed:', error.response?.data || error.message);
+  }
+
+  try {
+    const res = await axios.get(`${BASE_URL}/gamification/challenges/${challengeId}/qr`, authHeaders);
+    console.log('✅ Challenge QR Verification: SUCCESS, generated base64 length:', res.data.data.qrCode.length);
+  } catch (error: any) {
+    console.error('❌ Challenge QR Verification failed:', error.response?.data || error.message);
+  }
+
+  // 16. Concurrency-Safe Reward Redemption Test
+  let rewardId = '';
+  try {
+    const res = await axios.get(`${BASE_URL}/gamification/rewards`, authHeaders);
+    console.log('✅ Rewards Catalog: SUCCESS, found', res.data.data.length, 'rewards');
+    rewardId = res.data.data[0].id;
+  } catch (error: any) {
+    console.error('❌ Rewards Catalog failed:', error.response?.data || error.message);
+  }
+
+  try {
+    // Add points to test user first to ensure they have enough balance to redeem
+    await prisma.user.update({
+      where: { email: testEmail },
+      data: { pointsBalance: 1000 },
+    });
+
+    const res = await axios.post(`${BASE_URL}/gamification/rewards/${rewardId}/redeem`, {}, authHeaders);
+    console.log('✅ Reward Redemption (Safe Transaction): SUCCESS, points balance remaining:', res.data.data.user.pointsBalance);
+  } catch (error: any) {
+    console.error('❌ Reward Redemption failed:', error.response?.data || error.message);
   }
 
   console.log('==================================================');

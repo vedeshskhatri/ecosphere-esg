@@ -7,6 +7,7 @@ export class RewardRedemptionService {
    * Redeems a reward for a user in a concurrency-safe manner using row-level locking.
    */
   static async redeemReward(userId: string, rewardId: string) {
+    let pointsRequired = 0;
     return await prisma.$transaction(async (tx) => {
       // 1. Lock the Reward row to prevent race conditions on stock
       const rewards: any[] = await tx.$queryRaw`
@@ -42,7 +43,7 @@ export class RewardRedemptionService {
         throw new Error('User not found');
       }
 
-      const pointsRequired = Number(reward.pointsRequired);
+      pointsRequired = Number(reward.pointsRequired);
       const pointsBalance = Number(user.pointsBalance);
 
       if (pointsBalance < pointsRequired) {
@@ -75,27 +76,34 @@ export class RewardRedemptionService {
         },
       });
 
-      // 6. Create Notification
+      return {
+        redemption,
+        updatedUser,
+        user,
+        rewardName: reward.name,
+      };
+    }, { timeout: 15000 }).then(async (result) => {
+      // 6. Create Notification (runs outside transaction)
       await createNotification({
         userId,
         type: 'REWARD_REDEEMED',
         title: 'Reward Redeemed successfully',
-        message: `You successfully redeemed "${reward.name}" for ${pointsRequired} points.`,
+        message: `You successfully redeemed "${result.rewardName}" for ${pointsRequired} points.`,
         refType: 'RewardRedemption',
-        refId: redemption.id,
+        refId: result.redemption.id,
       });
 
       // 7. Emit updates via websockets
-      emitToUser(userId, 'user:update', updatedUser);
+      emitToUser(userId, 'user:update', result.updatedUser);
       emitToAll('activity:feed', {
         type: 'REWARD_REDEEMED',
-        message: `${user.name} redeemed the reward: "${reward.name}"`,
+        message: `${result.user.name} redeemed the reward: "${result.rewardName}"`,
         timestamp: new Date(),
       });
 
       return {
-        redemption,
-        user: updatedUser,
+        redemption: result.redemption,
+        user: result.updatedUser,
       };
     });
   }
