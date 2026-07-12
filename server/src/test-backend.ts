@@ -1,7 +1,7 @@
 import axios from 'axios';
 import prisma from './lib/prisma';
 
-const BASE_URL = 'http://localhost:5000/api';
+const BASE_URL = 'http://localhost:5001/api';
 
 async function runTests() {
   console.log('🤖 Starting EcoSphere Backend Integration Tests...');
@@ -11,7 +11,7 @@ async function runTests() {
 
   // 1. Healthcheck Test
   try {
-    const res = await axios.get('http://localhost:5000/');
+    const res = await axios.get('http://localhost:5001/');
     console.log('✅ Healthcheck root status: OK', res.data);
   } catch (error: any) {
     console.error('❌ Healthcheck root failed:', error.message);
