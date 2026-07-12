@@ -1,0 +1,29 @@
+version: '3.9'
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: ecosphere_db
+    environment:
+      POSTGRES_USER: ecosphere
+      POSTGRES_PASSWORD: ecosphere123
+      POSTGRES_DB: ecosphere
+    ports:
+      - "5432:5432"
+    volumes:
+      - ecosphere_pgdata:/var/lib/postgresql/data
+    restart: unless-stopped
+
+  pgadmin:
+    image: dpage/pgadmin4
+    container_name: ecosphere_pgadmin
+    environment:
+      PGADMIN_DEFAULT_EMAIL: admin@ecosphere.dev
+      PGADMIN_DEFAULT_PASSWORD: admin
+    ports:
+      - "5050:80"
+    depends_on:
+      - postgres
+    restart: unless-stopped
+
+volumes:
+  ecosphere_pgdata:
