@@ -902,7 +902,7 @@ export const GamificationPage: React.FC = () => {
                                 Send for Review
                               </button>
                             )}
-                            {ch.status === 'UNDER_REVIEW' && (
+                            {(ch.status === 'ACTIVE' || ch.status === 'UNDER_REVIEW') && (
                               <button
                                 onClick={() => handleTransitionStatus(ch.id, 'COMPLETED')}
                                 className="btn-secondary-gamify"

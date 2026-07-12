@@ -173,6 +173,7 @@ const AuthenticatedLayout: React.FC = () => {
     if (!user) return;
 
     socket.connect();
+    socket.emit('join:user', user.id);
     fetchCurrentUser();
 
     const fetchNotifications = async () => {

@@ -160,12 +160,12 @@ router.patch('/challenges/:id/status', requireAuth, requireRole('ADMIN', 'MANAGE
     let isValidTransition = false;
     if (newStatus === 'ARCHIVED') {
       isValidTransition = true;
-    } else if (currentStatus === 'DRAFT' && newStatus === 'ACTIVE') {
-      isValidTransition = true;
-    } else if (currentStatus === 'ACTIVE' && newStatus === 'UNDER_REVIEW') {
-      isValidTransition = true;
-    } else if (currentStatus === 'UNDER_REVIEW' && newStatus === 'COMPLETED') {
-      isValidTransition = true;
+    } else if (newStatus === 'ACTIVE') {
+      isValidTransition = ['DRAFT', 'ARCHIVED', 'COMPLETED', 'UNDER_REVIEW'].includes(currentStatus);
+    } else if (newStatus === 'UNDER_REVIEW') {
+      isValidTransition = currentStatus === 'ACTIVE';
+    } else if (newStatus === 'COMPLETED') {
+      isValidTransition = ['ACTIVE', 'UNDER_REVIEW'].includes(currentStatus);
     }
 
     if (!isValidTransition) {
@@ -300,10 +300,8 @@ router.patch('/challenges/participations/:id/approve', requireAuth, requireRole(
       return res.status(404).json({ success: false, error: 'Participation not found' });
     }
 
-    if (participation.approvalStatus !== 'PENDING') {
-      return res.status(400).json({ success: false, error: 'Participation is not pending approval' });
-    }
-
+    // Allow Admin/Manager to approve regardless of previous status, only awarding points if not already approved
+    const wasAlreadyApproved = participation.approvalStatus === 'APPROVED';
     const challengeXp = participation.challenge.xp;
     const employeeId = participation.employeeId;
     const challengeTitle = participation.challenge.title;
@@ -318,36 +316,40 @@ router.patch('/challenges/participations/:id/approve', requireAuth, requireRole(
         }
       });
 
-      await tx.user.update({
-        where: { id: employeeId },
-        data: {
-          xp: { increment: challengeXp },
-          pointsBalance: { increment: challengeXp }
-        }
-      });
+      if (!wasAlreadyApproved) {
+        await tx.user.update({
+          where: { id: employeeId },
+          data: {
+            xp: { increment: challengeXp },
+            pointsBalance: { increment: challengeXp }
+          }
+        });
+      }
 
       return p;
     });
 
-    // Check and award badges side-effect
-    checkAndAwardBadges(employeeId);
+    if (!wasAlreadyApproved) {
+      // Check and award badges side-effect
+      checkAndAwardBadges(employeeId);
 
-    // Create Notification
-    const title = 'Challenge Approved!';
-    const message = `Your submission for ${challengeTitle} has been approved!`;
-    await prisma.notification.create({
-      data: {
-        userId: employeeId,
-        type: 'CHALLENGE_APPROVED',
-        title,
-        message
-      }
-    });
+      // Create Notification
+      const title = 'Challenge Approved!';
+      const message = `Your submission for ${challengeTitle} has been approved!`;
+      await prisma.notification.create({
+        data: {
+          userId: employeeId,
+          type: 'CHALLENGE_APPROVED',
+          title,
+          message
+        }
+      });
 
-    // Realtime events
-    emitToUser(employeeId, 'notification:new', { title, message, type: 'CHALLENGE_APPROVED', xpAwarded: challengeXp, activityTitle: challengeTitle });
-    emitToAll('leaderboard:update', {});
-    emitToAll('activity:feed', { type: 'CHALLENGE_APPROVED', employeeName, challengeTitle });
+      // Realtime events
+      emitToUser(employeeId, 'notification:new', { title, message, type: 'CHALLENGE_APPROVED', xpAwarded: challengeXp, activityTitle: challengeTitle });
+      emitToAll('leaderboard:update', {});
+      emitToAll('activity:feed', { type: 'CHALLENGE_APPROVED', employeeName, challengeTitle });
+    }
 
     return res.json({ success: true, data: updatedParticipation });
   } catch (error: any) {
