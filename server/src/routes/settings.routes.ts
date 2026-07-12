@@ -56,6 +56,21 @@ const updateEsgConfigSchema = z.object({
 // DEPARTMENTS
 // ─────────────────────────────────────────
 
+// GET /api/settings/departments/public - Public access for registration dropdown
+router.get('/departments/public', async (req, res) => {
+  try {
+    const depts = await prisma.department.findMany({
+      where: { status: 'ACTIVE' },
+      select: { id: true, name: true, code: true },
+      orderBy: { name: 'asc' },
+    });
+    return res.json({ success: true, data: depts });
+  } catch (error) {
+    console.error('[Settings] Error fetching public departments:', error);
+    return res.status(500).json({ success: false, error: 'Failed to fetch departments' });
+  }
+});
+
 // GET /api/settings/departments - List all
 router.get('/departments', requireAuth, async (req, res) => {
   try {
