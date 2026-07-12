@@ -36,7 +36,7 @@ const NAV_SECTIONS: NavSection[] = [
     id: 'env',
     label: 'Environmental',
     color: 'var(--env)',
-    accentRgb: '34, 197, 94',
+    accentRgb: '74, 90, 53',
     icon: <Leaf size={17} />,
     links: [
       { label: 'Emission Factors', to: '/environmental/factors' },
@@ -48,7 +48,7 @@ const NAV_SECTIONS: NavSection[] = [
     id: 'social',
     label: 'Social',
     color: 'var(--social)',
-    accentRgb: '59, 130, 246',
+    accentRgb: '107, 114, 73',
     icon: <Users size={17} />,
     links: [
       { label: 'CSR Activities', to: '/social/activities' },
@@ -59,7 +59,7 @@ const NAV_SECTIONS: NavSection[] = [
     id: 'gov',
     label: 'Governance',
     color: 'var(--gov)',
-    accentRgb: '168, 85, 247',
+    accentRgb: '138, 118, 80',
     icon: <Shield size={17} />,
     links: [
       { label: 'Policies',          to: '/governance/policies' },
@@ -71,7 +71,7 @@ const NAV_SECTIONS: NavSection[] = [
     id: 'gamify',
     label: 'Gamification',
     color: 'var(--gamify)',
-    accentRgb: '249, 115, 22',
+    accentRgb: '192, 137, 90',
     icon: <Trophy size={17} />,
     links: [
       { label: 'Challenges',       to: '/gamification/challenges' },
