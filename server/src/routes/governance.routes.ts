@@ -5,6 +5,7 @@ import { validate } from '../middleware/validate';
 import { requireAuth, requireRole, AuthRequest } from '../middleware/auth';
 import { createNotification } from '../services/NotificationService';
 import { emitToAll } from '../socket/eventBus';
+import { EmailService } from '../services/EmailService';
 
 const router = Router();
 
@@ -302,6 +303,12 @@ router.post('/issues', requireAuth, requireRole('ADMIN', 'MANAGER'), validate(cr
       },
     });
 
+    // Fetch owner details for email
+    const owner = await prisma.user.findUnique({
+      where: { id: ownerId },
+      select: { name: true, email: true },
+    });
+
     // Notify issue owner
     await createNotification({
       userId: ownerId,
@@ -311,6 +318,21 @@ router.post('/issues', requireAuth, requireRole('ADMIN', 'MANAGER'), validate(cr
       refType: 'ComplianceIssue',
       refId: issue.id,
     });
+
+    // Send email notification to owner
+    if (owner) {
+      const emailHtml = EmailService.getComplianceIssueRaisedTemplate(
+        owner.name,
+        description,
+        severity,
+        new Date(dueDate)
+      );
+      EmailService.sendAlertEmail(
+        owner.email,
+        '📋 NEW ASSIGNMENT: Governance Compliance Issue',
+        emailHtml
+      );
+    }
 
     // Notify live feed
     emitToAll('activity:feed', {

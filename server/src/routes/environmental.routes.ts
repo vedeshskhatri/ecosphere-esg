@@ -4,6 +4,7 @@ import prisma from '../lib/prisma';
 import { validate } from '../middleware/validate';
 import { requireAuth, requireRole, AuthRequest } from '../middleware/auth';
 import { ScoringEngine } from '../services/ScoringEngine';
+import { ForecastEngine } from '../services/ForecastEngine';
 
 const router = Router();
 
@@ -278,6 +279,49 @@ router.get('/carbon-transactions/trend', requireAuth, async (req, res) => {
   } catch (error) {
     console.error('[Environmental] Error getting emissions trend:', error);
     return res.status(500).json({ success: false, error: 'Failed to calculate emissions trend' });
+  }
+});
+
+// GET /api/environmental/carbon-transactions/forecast
+router.get('/carbon-transactions/forecast', requireAuth, async (req, res) => {
+  try {
+    const rawTxs = await prisma.carbonTransaction.findMany({
+      select: {
+        date: true,
+        co2Kg: true,
+      },
+    });
+
+    // Group by month in memory (database-agnostic formatting)
+    const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+    const trendMap = new Map<string, { month: string; total: number }>();
+
+    rawTxs.forEach((tx) => {
+      const date = new Date(tx.date);
+      const label = `${monthNames[date.getMonth()]} ${date.getFullYear()}`;
+      
+      if (!trendMap.has(label)) {
+        trendMap.set(label, { month: label, total: 0 });
+      }
+
+      const entry = trendMap.get(label)!;
+      entry.total += Number(tx.co2Kg);
+    });
+
+    const historicalTrend = Array.from(trendMap.values())
+      .sort((a, b) => {
+        const dateA = new Date(a.month);
+        const dateB = new Date(b.month);
+        return dateA.getTime() - dateB.getTime();
+      });
+
+    // Generate forecast using simple linear regression
+    const forecastData = ForecastEngine.generateForecast(historicalTrend);
+
+    return res.json({ success: true, data: forecastData });
+  } catch (error) {
+    console.error('[Environmental] Error calculating forecast:', error);
+    return res.status(500).json({ success: false, error: 'Failed to calculate emissions forecast' });
   }
 });
 

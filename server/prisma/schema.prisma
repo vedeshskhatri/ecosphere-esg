@@ -266,6 +266,8 @@ model User {
   xp             Int        @default(0)
   pointsBalance  Int        @default(0)
   status         UserStatus @default(ACTIVE)
+  gender         String?
+  joinDate       DateTime   @default(now())
   createdAt      DateTime   @default(now())
   updatedAt      DateTime   @updatedAt
 

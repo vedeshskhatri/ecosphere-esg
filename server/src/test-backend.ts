@@ -88,6 +88,38 @@ async function runTests() {
     console.error('❌ Environmental Emission Factors failed:', error.response?.data || error.message);
   }
 
+  // 9. AI Carbon Forecast Test
+  try {
+    const res = await axios.get(`${BASE_URL}/environmental/carbon-transactions/forecast`, authHeaders);
+    console.log('✅ AI Carbon Forecast: SUCCESS, found', res.data.data.length, 'points (including projections)');
+  } catch (error: any) {
+    console.error('❌ AI Carbon Forecast failed:', error.response?.data || error.message);
+  }
+
+  // 10. Social Diversity Metrics Test
+  try {
+    const res = await axios.get(`${BASE_URL}/social/diversity`, authHeaders);
+    console.log('✅ Social Diversity Metrics: SUCCESS, found', res.data.data.totalEmployees, 'employees categorized');
+  } catch (error: any) {
+    console.error('❌ Social Diversity Metrics failed:', error.response?.data || error.message);
+  }
+
+  // 11. PDF Report Export Test
+  try {
+    const res = await axios.get(`${BASE_URL}/reports/pdf`, { ...authHeaders, responseType: 'arraybuffer' });
+    console.log('✅ PDF ESG Certificate: SUCCESS, received file of size', res.data.byteLength, 'bytes');
+  } catch (error: any) {
+    console.error('❌ PDF ESG Certificate failed:', error.response?.data || error.message);
+  }
+
+  // 12. CSV Emissions Export Test
+  try {
+    const res = await axios.get(`${BASE_URL}/reports/csv?type=emissions`, authHeaders);
+    console.log('✅ CSV Emissions Report: SUCCESS, fetched content lines:', res.data.split('\n').length);
+  } catch (error: any) {
+    console.error('❌ CSV Emissions Report failed:', error.response?.data || error.message);
+  }
+
   console.log('==================================================');
   console.log('🎉 All backend tests finished successfully!');
 }
