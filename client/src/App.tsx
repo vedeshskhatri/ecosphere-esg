@@ -254,20 +254,20 @@ export const App: React.FC = () => {
         position="top-right"
         toastOptions={{
           style: {
-            background: 'rgba(15, 19, 30, 0.95)',
-            color: 'var(--text-primary)',
-            border: '1px solid var(--border-strong)',
-            borderRadius: 'var(--radius-md)',
+            background: '#ffffff',
+            color: '#19350C',
+            border: '1px solid rgba(25, 53, 12, 0.12)',
+            borderRadius: '12px',
             fontSize: 'var(--text-sm)',
             fontFamily: 'var(--font-body)',
-            backdropFilter: 'blur(20px)',
-            boxShadow: '0 8px 32px rgba(0,0,0,0.4)',
+            boxShadow: '0 8px 30px rgba(25, 53, 12, 0.08)',
+            padding: '12px 16px',
           },
           success: {
-            iconTheme: { primary: 'var(--env)', secondary: '#000' },
+            iconTheme: { primary: '#22c55e', secondary: '#fff' },
           },
           error: {
-            iconTheme: { primary: 'var(--severity-high)', secondary: '#fff' },
+            iconTheme: { primary: '#ef4444', secondary: '#fff' },
           },
         }}
       />

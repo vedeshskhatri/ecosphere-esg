@@ -57,6 +57,19 @@ export const SocialPage: React.FC = () => {
   // Form Fields - Join Activity
   const [proofFile, setProofFile] = useState<File | null>(null);
   const [dragOver, setDragOver] = useState<boolean>(false);
+  const [esgSettings, setEsgSettings] = useState<any>(null);
+
+  // Fetch ESG Settings
+  const fetchEsgSettings = useCallback(async () => {
+    try {
+      const res = await api.get('/settings/esg-config');
+      if (res.data && res.data.success) {
+        setEsgSettings(res.data.data);
+      }
+    } catch (e) {
+      console.error('Failed to load ESG config in SocialPage', e);
+    }
+  }, []);
 
   // Fetch CSR Activities
   const fetchActivities = useCallback(async () => {
@@ -102,11 +115,11 @@ export const SocialPage: React.FC = () => {
   useEffect(() => {
     const initData = async () => {
       setLoading(true);
-      await Promise.all([fetchActivities(), fetchParticipations(), fetchCategories()]);
+      await Promise.all([fetchActivities(), fetchParticipations(), fetchCategories(), fetchEsgSettings()]);
       setLoading(false);
     };
     initData();
-  }, [fetchActivities, fetchParticipations, fetchCategories]);
+  }, [fetchActivities, fetchParticipations, fetchCategories, fetchEsgSettings]);
 
   // Handle New Activity Submit
   const handleCreateActivity = async (e: React.FormEvent) => {
@@ -154,7 +167,9 @@ export const SocialPage: React.FC = () => {
     const activity = showJoinModal.activity;
     if (!activity) return;
 
-    if (activity.evidenceRequired && !proofFile) {
+    const evidenceRequiredForJoin = activity.evidenceRequired || (esgSettings ? esgSettings.evidenceRequired : true);
+
+    if (evidenceRequiredForJoin && !proofFile) {
       toast.error('Proof file required');
       return;
     }
@@ -704,21 +719,21 @@ export const SocialPage: React.FC = () => {
           justifyContent: 'center',
           zIndex: 1000
         }}>
-          <div className="glass-card" style={{ width: '100%', maxWidth: '480px', padding: '1.5rem', display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
+          <div className="glass-card" style={{ width: '100%', maxWidth: '480px', padding: '1.5rem', display: 'flex', flexDirection: 'column', gap: '1.25rem', backgroundColor: '#ffffff', border: '1px solid rgba(25, 53, 12, 0.12)', boxShadow: '0 10px 30px rgba(25, 53, 12, 0.1)' }}>
             <div>
-              <h2 style={{ color: '#f1f5f9', fontWeight: 800, fontSize: '1.25rem', margin: 0 }}>
+              <h2 style={{ color: '#19350C', fontWeight: 800, fontSize: '1.25rem', margin: 0 }}>
                 Join Activity
               </h2>
-              <p style={{ color: '#94a3b8', fontSize: '0.85rem', margin: '4px 0 0 0' }}>
+              <p style={{ color: '#687D31', fontSize: '0.85rem', margin: '4px 0 0 0' }}>
                 Confirm your participation in <strong>{showJoinModal.activity.title}</strong>
               </p>
             </div>
 
             <form onSubmit={handleJoinActivity} style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
               {/* File Upload Area */}
-              {showJoinModal.activity.evidenceRequired && (
+              {(showJoinModal.activity.evidenceRequired || (esgSettings ? esgSettings.evidenceRequired : true)) && (
                 <div>
-                  <label style={{ display: 'block', color: '#f1f5f9', fontSize: '0.85rem', fontWeight: 600, marginBottom: '0.5rem' }}>
+                  <label style={{ display: 'block', color: '#19350C', fontSize: '0.85rem', fontWeight: 600, marginBottom: '0.5rem' }}>
                     Upload proof file *
                   </label>
                   <div
@@ -732,22 +747,22 @@ export const SocialPage: React.FC = () => {
                       }
                     }}
                     style={{
-                      border: `2px dashed ${dragOver ? '#3b82f6' : 'rgba(255, 255, 255, 0.15)'}`,
+                      border: dragOver ? '2px dashed #687D31' : '2px dashed rgba(25, 53, 12, 0.2)',
                       borderRadius: '12px',
                       padding: '2rem',
                       textAlign: 'center',
-                      background: dragOver ? 'rgba(59, 130, 246, 0.05)' : 'rgba(0, 0, 0, 0.25)',
+                      background: dragOver ? 'rgba(104, 125, 49, 0.08)' : 'rgba(25, 53, 12, 0.02)',
                       cursor: 'pointer',
                       transition: 'all 0.2s',
                       position: 'relative'
                     }}
                     onClick={() => document.getElementById('modal-proof-input')?.click()}
                   >
-                    <Upload size={28} style={{ color: dragOver ? '#3b82f6' : '#94a3b8', marginBottom: '0.75rem' }} />
-                    <p style={{ margin: 0, fontSize: '0.875rem', fontWeight: 600, color: '#f1f5f9' }}>
+                    <Upload size={28} style={{ color: '#687D31', marginBottom: '0.75rem' }} />
+                    <p style={{ margin: 0, fontSize: '0.875rem', fontWeight: 600, color: '#19350C' }}>
                       {proofFile ? proofFile.name : 'Upload proof file'}
                     </p>
-                    <p style={{ margin: '4px 0 0 0', fontSize: '0.75rem', color: '#94a3b8' }}>
+                    <p style={{ margin: '4px 0 0 0', fontSize: '0.75rem', color: '#687D31' }}>
                       Drag & drop or click to select
                     </p>
                     <input
@@ -770,10 +785,10 @@ export const SocialPage: React.FC = () => {
                     setProofFile(null);
                   }}
                   style={{
-                    background: 'rgba(255, 255, 255, 0.05)',
-                    border: '1px solid rgba(255, 255, 255, 0.08)',
+                    background: 'rgba(25, 53, 12, 0.05)',
+                    border: '1px solid rgba(25, 53, 12, 0.1)',
                     borderRadius: '8px',
-                    color: '#94a3b8',
+                    color: '#687D31',
                     padding: '0.5rem 1rem',
                     fontWeight: 600,
                     cursor: 'pointer',
@@ -785,7 +800,7 @@ export const SocialPage: React.FC = () => {
                 <button
                   type="submit"
                   style={{
-                    background: '#3b82f6',
+                    background: '#687D31',
                     border: 'none',
                     borderRadius: '8px',
                     color: '#fff',
@@ -793,7 +808,7 @@ export const SocialPage: React.FC = () => {
                     fontWeight: 600,
                     cursor: 'pointer',
                     fontSize: '0.875rem',
-                    boxShadow: '0 4px 12px rgba(59, 130, 246, 0.25)'
+                    boxShadow: '0 4px 12px rgba(104, 125, 49, 0.2)'
                   }}
                 >
                   Join Drive
