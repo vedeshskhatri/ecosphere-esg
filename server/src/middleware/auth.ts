@@ -15,12 +15,18 @@ export interface AuthRequest extends Request {
  * Middleware to require valid JWT authentication.
  */
 export function requireAuth(req: AuthRequest, res: Response, next: NextFunction) {
+  let token: string | undefined;
+
   const authHeader = req.headers.authorization;
-  if (!authHeader || !authHeader.startsWith('Bearer ')) {
-    return res.status(401).json({ success: false, error: 'Unauthorized: No token provided' });
+  if (authHeader && authHeader.startsWith('Bearer ')) {
+    token = authHeader.split(' ')[1];
+  } else if (req.query && req.query.token) {
+    token = req.query.token as string;
   }
 
-  const token = authHeader.split(' ')[1];
+  if (!token) {
+    return res.status(401).json({ success: false, error: 'Unauthorized: No token provided' });
+  }
 
   try {
     const decoded = jwt.verify(token, JWT_SECRET) as {
@@ -34,6 +40,7 @@ export function requireAuth(req: AuthRequest, res: Response, next: NextFunction)
     return res.status(401).json({ success: false, error: 'Unauthorized: Invalid token' });
   }
 }
+
 
 /**
  * Middleware factory to require specific roles.

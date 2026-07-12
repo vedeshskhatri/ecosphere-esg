@@ -58,6 +58,7 @@ export const SocialPage: React.FC = () => {
   const [proofFile, setProofFile] = useState<File | null>(null);
   const [dragOver, setDragOver] = useState<boolean>(false);
   const [esgSettings, setEsgSettings] = useState<any>(null);
+  const [submittingIds, setSubmittingIds] = useState<Record<string, boolean>>({});
 
   // Fetch ESG Settings
   const fetchEsgSettings = useCallback(async () => {
@@ -200,29 +201,35 @@ export const SocialPage: React.FC = () => {
 
   // Handle Action Approval
   const handleApprove = async (id: string) => {
+    if (submittingIds[id]) return;
+    setSubmittingIds(prev => ({ ...prev, [id]: true }));
     try {
       const res = await api.patch(`/social/participations/${id}/approve`);
       if (res.data && res.data.success) {
         toast.success('Participation approved.');
-        fetchParticipations();
-        fetchActivities();
+        await Promise.all([fetchParticipations(), fetchActivities()]);
       }
     } catch (error: any) {
       toast.error(error.response?.data?.error || 'Failed to approve participation.');
+    } finally {
+      setSubmittingIds(prev => ({ ...prev, [id]: false }));
     }
   };
 
   // Handle Action Rejection
   const handleReject = async (id: string) => {
+    if (submittingIds[id]) return;
+    setSubmittingIds(prev => ({ ...prev, [id]: true }));
     try {
       const res = await api.patch(`/social/participations/${id}/reject`);
       if (res.data && res.data.success) {
         toast.success('Participation rejected.');
-        fetchParticipations();
-        fetchActivities();
+        await Promise.all([fetchParticipations(), fetchActivities()]);
       }
     } catch (error: any) {
       toast.error(error.response?.data?.error || 'Failed to reject participation.');
+    } finally {
+      setSubmittingIds(prev => ({ ...prev, [id]: false }));
     }
   };
 
@@ -643,6 +650,7 @@ export const SocialPage: React.FC = () => {
                         <div style={{ display: 'flex', gap: '0.5rem' }}>
                           <button
                             onClick={() => handleApprove(part.id)}
+                            disabled={submittingIds[part.id]}
                             style={{
                               background: 'rgba(34, 197, 94, 0.15)',
                               color: '#22c55e',
@@ -651,7 +659,8 @@ export const SocialPage: React.FC = () => {
                               padding: '0.35rem 0.75rem',
                               fontSize: '0.85rem',
                               fontWeight: 600,
-                              cursor: 'pointer',
+                              cursor: submittingIds[part.id] ? 'not-allowed' : 'pointer',
+                              opacity: submittingIds[part.id] ? 0.6 : 1,
                               display: 'flex',
                               alignItems: 'center',
                               gap: '4px',
@@ -662,6 +671,7 @@ export const SocialPage: React.FC = () => {
                           </button>
                           <button
                             onClick={() => handleReject(part.id)}
+                            disabled={submittingIds[part.id]}
                             style={{
                               background: 'rgba(239, 68, 68, 0.15)',
                               color: '#ef4444',
@@ -670,7 +680,8 @@ export const SocialPage: React.FC = () => {
                               padding: '0.35rem 0.75rem',
                               fontSize: '0.85rem',
                               fontWeight: 600,
-                              cursor: 'pointer',
+                              cursor: submittingIds[part.id] ? 'not-allowed' : 'pointer',
+                              opacity: submittingIds[part.id] ? 0.6 : 1,
                               display: 'flex',
                               alignItems: 'center',
                               gap: '4px',
