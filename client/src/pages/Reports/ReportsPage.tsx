@@ -42,25 +42,74 @@ export const ReportsPage: React.FC = () => {
     loadPreview();
   }, [reportType, deptId, startDate, endDate]);
 
-  const handleExport = () => {
-    let url = `http://localhost:5001/api/reports/export?type=${reportType}`;
-    if (deptId) url += `&departmentId=${deptId}`;
-    if (startDate) url += `&startDate=${startDate}`;
-    if (endDate) url += `&endDate=${endDate}`;
-    
-    // Add token parameter manually for standard window.open request authentication
-    const token = localStorage.getItem('ecosphere_token');
-    if (token) url += `&token=${token}`;
+  const applyPreset = (preset: string) => {
+    const today = new Date();
+    let start = new Date();
+    let end = new Date();
 
-    // Standard download flow using hidden anchor link to support native download dialogs
-    const link = document.createElement('a');
-    link.href = url;
-    link.target = '_blank';
-    link.download = `ecosphere_${reportType}_report.csv`;
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-    toast.success('Downloading CSV export report...');
+    if (preset === 'this-week') {
+      const day = today.getDay();
+      const diff = today.getDate() - day + (day === 0 ? -6 : 1);
+      start = new Date(today.getFullYear(), today.getMonth(), diff);
+      end = new Date();
+    } else if (preset === 'this-month') {
+      start = new Date(today.getFullYear(), today.getMonth(), 1);
+      end = new Date();
+    } else if (preset === 'quarterly') {
+      const quarter = Math.floor(today.getMonth() / 3);
+      start = new Date(today.getFullYear(), quarter * 3, 1);
+      end = new Date();
+    } else if (preset === 'annually') {
+      start = new Date(today.getFullYear(), 0, 1);
+      end = new Date();
+    } else if (preset === 'financial-year') {
+      // Financial year starts April 1st.
+      const currentYear = today.getFullYear();
+      const startYear = today.getMonth() >= 3 ? currentYear : currentYear - 1;
+      start = new Date(startYear, 3, 1);
+      end = new Date();
+    }
+
+    const formatDate = (d: Date) => {
+      const year = d.getFullYear();
+      const month = String(d.getMonth() + 1).padStart(2, '0');
+      const day = String(d.getDate()).padStart(2, '0');
+      return `${year}-${month}-${day}`;
+    };
+
+    setStartDate(formatDate(start));
+    setEndDate(formatDate(end));
+  };
+
+  const handleExport = async () => {
+    if (!startDate || !endDate) {
+      toast.error('Please select both Start Date and End Date to export the report.');
+      return;
+    }
+
+    const loadingToastId = toast.loading('Preparing CSV export...');
+    try {
+      const res = await api.get(`/reports/export?type=${reportType}&departmentId=${deptId}&startDate=${startDate}&endDate=${endDate}`, {
+        responseType: 'blob'
+      });
+      
+      const blob = new Blob([res.data], { type: 'text/csv;charset=utf-8;' });
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.setAttribute('download', `ecosphere_${reportType}_report.csv`);
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      window.URL.revokeObjectURL(url);
+      
+      toast.dismiss(loadingToastId);
+      toast.success('Report downloaded successfully!');
+    } catch (err: any) {
+      console.error(err);
+      toast.dismiss(loadingToastId);
+      toast.error('Failed to download report export.');
+    }
   };
 
   return (
@@ -76,7 +125,7 @@ export const ReportsPage: React.FC = () => {
       </div>
 
       {/* Dynamic Filters Bar */}
-      <div className="card" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '1rem', alignItems: 'center' }}>
+      <div className="card" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: '1rem', alignItems: 'center' }}>
         <div>
           <label className="label">Report Subject</label>
           <select className="input" value={reportType} onChange={(e: any) => setReportType(e.target.value)}>
@@ -96,18 +145,34 @@ export const ReportsPage: React.FC = () => {
         </div>
 
         <div>
-          <label className="label">Start Date</label>
-          <input type="date" className="input" value={startDate} onChange={(e) => setStartDate(e.target.value)} />
+          <label className="label">Quick Preset</label>
+          <select 
+            className="input" 
+            onChange={(e) => applyPreset(e.target.value)}
+            defaultValue=""
+          >
+            <option value="" disabled>Select range...</option>
+            <option value="this-week">This Week</option>
+            <option value="this-month">This Month</option>
+            <option value="quarterly">Quarterly</option>
+            <option value="annually">Annually</option>
+            <option value="financial-year">This Financial Year</option>
+          </select>
         </div>
 
         <div>
-          <label className="label">End Date</label>
-          <input type="date" className="input" value={endDate} onChange={(e) => setEndDate(e.target.value)} />
+          <label className="label">Start Date *</label>
+          <input type="date" className="input" required value={startDate} onChange={(e) => setStartDate(e.target.value)} />
+        </div>
+
+        <div>
+          <label className="label">End Date *</label>
+          <input type="date" className="input" required value={endDate} onChange={(e) => setEndDate(e.target.value)} />
         </div>
 
         <div style={{ justifySelf: 'end', marginTop: '1.25rem' }}>
           <button onClick={handleExport} className="btn btn-primary" style={{ gap: '6px' }}>
-            <FileDown size={16} /> Export Disclosures (CSV)
+            <FileDown size={16} /> Export (CSV)
           </button>
         </div>
       </div>

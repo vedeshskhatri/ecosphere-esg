@@ -7,6 +7,7 @@ import prisma from '../lib/prisma';
 import { requireAuth, requireRole, AuthRequest } from '../middleware/auth';
 import { emitToAll, emitToUser } from '../socket/eventBus';
 import { checkAndAwardBadges } from '../services/BadgeAwardEngine';
+import ScoringEngine from '../services/ScoringEngine';
 
 const router = Router();
 
@@ -334,11 +335,16 @@ router.patch('/participations/:id/approve', requireAuth, requireRole('ADMIN', 'M
     const message = `Your participation in ${activityTitle} has been approved!`;
 
     // Realtime events
-    emitToUser(employeeId, 'notification:new', { title, message });
+    emitToUser(employeeId, 'notification:new', { title, message, type: 'CSR_APPROVED', xpAwarded: xpReward, activityTitle });
     emitToAll('activity:feed', { type: 'CSR_APPROVED', employeeName, activityTitle });
 
     // Check and award badges (async, non-blocking side-effect)
     checkAndAwardBadges(employeeId);
+
+    // Recalculate scores upon approval
+    if (participation.employee.departmentId) {
+      await ScoringEngine.recalculateAndEmit(participation.employee.departmentId);
+    }
 
     return res.json({ success: true, data: updatedParticipation });
   } catch (error: any) {

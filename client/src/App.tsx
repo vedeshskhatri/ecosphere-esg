@@ -8,10 +8,10 @@ import useNotificationStore from './store/notificationStore';
 import { socket } from './lib/socket';
 import api from './lib/api';
 
-// Components
 import Sidebar from './components/Sidebar';
 import NotificationBell from './components/NotificationBell';
 import { SectionContextBar } from './components/SectionContextBar';
+import XPCelebrationOverlay from './components/XPCelebrationOverlay';
 
 // Pages
 import LoginPage from './pages/Auth/LoginPage';
@@ -146,6 +146,10 @@ const ProtectedRoute: React.FC<{ children: React.ReactNode }> = ({ children }) =
 const AuthenticatedLayout: React.FC = () => {
   const [notificationsOpen, setNotificationsOpen] = useState(false);
   const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
+  const [xpCelebration, setXpCelebration] = useState<{ visible: boolean; xp: number; activityTitle?: string }>({
+    visible: false,
+    xp: 0,
+  });
 
   const user = useAuthStore((state) => state.user);
   const fetchCurrentUser = useAuthStore((state) => state.fetchCurrentUser);
@@ -184,10 +188,24 @@ const AuthenticatedLayout: React.FC = () => {
     socket.on('notification:new', (notification) => {
       console.log('[Socket] New notification received:', notification);
       addNotification(notification);
+      fetchCurrentUser();
+
+      // Trigger XP celebration for approval events
+      if (
+        (notification.type === 'CSR_APPROVED' || notification.type === 'CHALLENGE_APPROVED') &&
+        notification.xpAwarded
+      ) {
+        setXpCelebration({
+          visible: true,
+          xp: notification.xpAwarded,
+          activityTitle: notification.activityTitle,
+        });
+      }
     });
 
     socket.on('badge:awarded', (data) => {
       console.log('[Socket] Badge awarded:', data);
+      fetchCurrentUser();
     });
 
     return () => {
@@ -195,7 +213,7 @@ const AuthenticatedLayout: React.FC = () => {
       socket.off('badge:awarded');
       socket.disconnect();
     };
-  }, [user?.id, setNotifications, addNotification]);
+  }, [user?.id, setNotifications, addNotification, fetchCurrentUser]);
 
   // Close mobile sidebar on route change
   const handleMobileClose = () => setMobileSidebarOpen(false);
@@ -240,6 +258,14 @@ const AuthenticatedLayout: React.FC = () => {
         isOpen={notificationsOpen}
         onClose={() => setNotificationsOpen(false)}
       />
+
+      {/* XP Celebration Overlay */}
+      <XPCelebrationOverlay
+        isVisible={xpCelebration.visible}
+        xpAmount={xpCelebration.xp}
+        activityTitle={xpCelebration.activityTitle}
+        onClose={() => setXpCelebration((s) => ({ ...s, visible: false }))}
+      />
     </div>
   );
 };
@@ -254,20 +280,20 @@ export const App: React.FC = () => {
         position="top-right"
         toastOptions={{
           style: {
-            background: 'rgba(15, 19, 30, 0.95)',
-            color: 'var(--text-primary)',
-            border: '1px solid var(--border-strong)',
-            borderRadius: 'var(--radius-md)',
+            background: '#ffffff',
+            color: '#19350C',
+            border: '1px solid rgba(25, 53, 12, 0.12)',
+            borderRadius: '12px',
             fontSize: 'var(--text-sm)',
             fontFamily: 'var(--font-body)',
-            backdropFilter: 'blur(20px)',
-            boxShadow: '0 8px 32px rgba(0,0,0,0.4)',
+            boxShadow: '0 8px 30px rgba(25, 53, 12, 0.08)',
+            padding: '12px 16px',
           },
           success: {
-            iconTheme: { primary: 'var(--env)', secondary: '#000' },
+            iconTheme: { primary: '#22c55e', secondary: '#fff' },
           },
           error: {
-            iconTheme: { primary: 'var(--severity-high)', secondary: '#fff' },
+            iconTheme: { primary: '#ef4444', secondary: '#fff' },
           },
         }}
       />
