@@ -36,7 +36,7 @@ export const RegisterPage: React.FC = () => {
     // Note: We bypass token check since this is a public settings route on the server
     const fetchDepts = async () => {
       try {
-        const res: any = await api.get('/settings/departments');
+        const res: any = await api.get('/settings/departments/public');
         setDepartments(res.data.data);
       } catch (err) {
         console.error('Failed to load departments', err);
