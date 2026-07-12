@@ -63,7 +63,7 @@ router.post('/register', validate(registerSchema), async (req, res) => {
     const token = jwt.sign(
       { id: user.id, email: user.email, role: user.role },
       JWT_SECRET,
-      { expiresIn: JWT_EXPIRES_IN }
+      { expiresIn: JWT_EXPIRES_IN as any }
     );
 
     return res.status(201).json({
@@ -107,7 +107,7 @@ router.post('/login', validate(loginSchema), async (req, res) => {
     const token = jwt.sign(
       { id: user.id, email: user.email, role: user.role },
       JWT_SECRET,
-      { expiresIn: JWT_EXPIRES_IN }
+      { expiresIn: JWT_EXPIRES_IN as any }
     );
 
     const { passwordHash, ...userWithoutPassword } = user;
