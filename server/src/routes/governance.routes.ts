@@ -5,6 +5,7 @@ import { validate } from '../middleware/validate';
 import { requireAuth, requireRole, AuthRequest } from '../middleware/auth';
 import { createNotification } from '../services/NotificationService';
 import { emitToAll } from '../socket/eventBus';
+import { ScoringEngine } from '../services/ScoringEngine';
 
 const router = Router();
 
@@ -189,9 +190,18 @@ router.post('/policies/:id/acknowledge', requireAuth, async (req: AuthRequest, r
       },
     });
 
+    // Recalculate scores for employee's department
+    const employee = await prisma.user.findUnique({
+      where: { id: userId },
+      select: { departmentId: true, name: true }
+    });
+    if (employee && employee.departmentId) {
+      await ScoringEngine.recalculateAndEmit(employee.departmentId);
+    }
+
     emitToAll('activity:feed', {
       type: 'POLICY_ACKNOWLEDGED',
-      message: `Employee acknowledged policy`,
+      message: `${employee?.name || 'Employee'} acknowledged policy: "${id}"`,
       timestamp: new Date(),
     });
 
@@ -319,6 +329,15 @@ router.post('/issues', requireAuth, requireRole('ADMIN', 'MANAGER'), validate(cr
       timestamp: new Date(),
     });
 
+    // Recalculate scores for owner's department
+    const owner = await prisma.user.findUnique({
+      where: { id: ownerId },
+      select: { departmentId: true }
+    });
+    if (owner && owner.departmentId) {
+      await ScoringEngine.recalculateAndEmit(owner.departmentId);
+    }
+
     return res.status(201).json({ success: true, data: issue });
   } catch (error) {
     console.error('[Governance] Error creating compliance issue:', error);
@@ -339,6 +358,18 @@ router.patch('/issues/:id', requireAuth, requireRole('ADMIN', 'MANAGER'), valida
         isOverdue: isOverdue !== undefined ? isOverdue : undefined,
       },
     });
+    const issueWithDept = await prisma.complianceIssue.findUnique({
+      where: { id },
+      include: {
+        audit: { select: { departmentId: true } },
+        owner: { select: { departmentId: true } },
+      },
+    });
+    const deptId = issueWithDept?.audit?.departmentId || issueWithDept?.owner?.departmentId;
+    if (deptId) {
+      await ScoringEngine.recalculateAndEmit(deptId);
+    }
+
     return res.json({ success: true, data: issue });
   } catch (error) {
     console.error('[Governance] Error updating compliance issue:', error);
