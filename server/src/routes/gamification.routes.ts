@@ -166,6 +166,8 @@ router.patch('/challenges/:id/status', requireAuth, requireRole('ADMIN', 'MANAGE
       isValidTransition = true;
     } else if (currentStatus === 'UNDER_REVIEW' && newStatus === 'COMPLETED') {
       isValidTransition = true;
+    } else if (currentStatus === 'ARCHIVED' && newStatus === 'ACTIVE') {
+      isValidTransition = true;
     }
 
     if (!isValidTransition) {
