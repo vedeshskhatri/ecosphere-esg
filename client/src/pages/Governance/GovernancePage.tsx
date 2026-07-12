@@ -101,6 +101,7 @@ export const GovernancePage: React.FC = () => {
       status: pStatus,
     });
     if (success) {
+      setPolicyFilter(pStatus);
       setShowPolicyForm(false);
       setPTitle('');
       setPDescription('');
@@ -334,7 +335,10 @@ export const GovernancePage: React.FC = () => {
                         <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
                           {policy.status === 'DRAFT' ? (
                             <button
-                              onClick={() => updatePolicyStatus(policy.id, 'ACTIVE')}
+                              onClick={async () => {
+                                await updatePolicyStatus(policy.id, 'ACTIVE');
+                                setPolicyFilter('ACTIVE');
+                              }}
                               className="btn btn-primary"
                               style={{ padding: '0.35rem 0.75rem' }}
                             >
