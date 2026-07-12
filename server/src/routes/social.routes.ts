@@ -199,8 +199,9 @@ router.post('/:id/join', requireAuth, upload.single('proof'), async (req: AuthRe
     // Check ESG Settings
     const esgSettings = await prisma.esgSettings.findFirst();
     const settingsEvidenceRequired = esgSettings ? esgSettings.evidenceRequired : true;
+    const isEvidenceRequired = activity.evidenceRequired || settingsEvidenceRequired;
 
-    if (settingsEvidenceRequired && !req.file) {
+    if (isEvidenceRequired && !req.file) {
       return res.status(400).json({ success: false, error: 'Proof file required' });
     }
 
@@ -289,10 +290,8 @@ router.patch('/participations/:id/approve', requireAuth, requireRole('ADMIN', 'M
       return res.status(404).json({ success: false, error: 'Participation not found' });
     }
 
-    if (participation.approvalStatus !== 'PENDING') {
-      return res.status(400).json({ success: false, error: 'Participation is not pending approval' });
-    }
-
+    // Allow Admin/Manager to approve regardless of previous status, only awarding points if not already approved
+    const wasAlreadyApproved = participation.approvalStatus === 'APPROVED';
     const xpReward = participation.activity.xpReward;
     const employeeId = participation.employeeId;
     const activityTitle = participation.activity.title;
@@ -308,42 +307,46 @@ router.patch('/participations/:id/approve', requireAuth, requireRole('ADMIN', 'M
         }
       });
 
-      await tx.user.update({
-        where: { id: employeeId },
-        data: {
-          xp: { increment: xpReward },
-          pointsBalance: { increment: xpReward }
-        }
-      });
+      if (!wasAlreadyApproved) {
+        await tx.user.update({
+          where: { id: employeeId },
+          data: {
+            xp: { increment: xpReward },
+            pointsBalance: { increment: xpReward }
+          }
+        });
 
-      const title = 'CSR Activity Approved';
-      const message = `Your participation in ${activityTitle} has been approved!`;
+        const title = 'CSR Activity Approved';
+        const message = `Your participation in ${activityTitle} has been approved!`;
 
-      await tx.notification.create({
-        data: {
-          userId: employeeId,
-          type: 'CSR_APPROVED',
-          title,
-          message
-        }
-      });
+        await tx.notification.create({
+          data: {
+            userId: employeeId,
+            type: 'CSR_APPROVED',
+            title,
+            message
+          }
+        });
+      }
 
       return p;
     });
 
-    const title = 'CSR Activity Approved';
-    const message = `Your participation in ${activityTitle} has been approved!`;
+    if (!wasAlreadyApproved) {
+      const title = 'CSR Activity Approved';
+      const message = `Your participation in ${activityTitle} has been approved!`;
 
-    // Realtime events
-    emitToUser(employeeId, 'notification:new', { title, message, type: 'CSR_APPROVED', xpAwarded: xpReward, activityTitle });
-    emitToAll('activity:feed', { type: 'CSR_APPROVED', employeeName, activityTitle });
+      // Realtime events
+      emitToUser(employeeId, 'notification:new', { title, message, type: 'CSR_APPROVED', xpAwarded: xpReward, activityTitle });
+      emitToAll('activity:feed', { type: 'CSR_APPROVED', employeeName, activityTitle });
 
-    // Check and award badges (async, non-blocking side-effect)
-    checkAndAwardBadges(employeeId);
+      // Check and award badges (async, non-blocking side-effect)
+      checkAndAwardBadges(employeeId);
 
-    // Recalculate scores upon approval
-    if (participation.employee.departmentId) {
-      await ScoringEngine.recalculateAndEmit(participation.employee.departmentId);
+      // Recalculate scores upon approval
+      if (participation.employee.departmentId) {
+        await ScoringEngine.recalculateAndEmit(participation.employee.departmentId);
+      }
     }
 
     return res.json({ success: true, data: updatedParticipation });

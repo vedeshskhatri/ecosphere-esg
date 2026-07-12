@@ -93,17 +93,20 @@ export const GovernancePage: React.FC = () => {
       toast.error('Policy title and description are required.');
       return;
     }
-    await createPolicy({
+    const success = await createPolicy({
       title: pTitle,
       description: pDescription,
       departmentId: pDeptId || null,
       effectiveDate: pEffectiveDate,
       status: pStatus,
     });
-    setShowPolicyForm(false);
-    setPTitle('');
-    setPDescription('');
-    setPDeptId('');
+    if (success) {
+      setPolicyFilter(pStatus);
+      setShowPolicyForm(false);
+      setPTitle('');
+      setPDescription('');
+      setPDeptId('');
+    }
   };
 
   const handleAuditSubmit = async (e: React.FormEvent) => {
@@ -112,7 +115,7 @@ export const GovernancePage: React.FC = () => {
       toast.error('Please fill in all required fields.');
       return;
     }
-    await createAudit({
+    const success = await createAudit({
       title: aTitle,
       departmentId: aDeptId,
       auditorId: aAuditorId,
@@ -120,12 +123,14 @@ export const GovernancePage: React.FC = () => {
       findings: aFindings,
       status: 'PLANNED',
     });
-    setShowAuditForm(false);
-    setATitle('');
-    setADeptId('');
-    setAAuditorId('');
-    setADate('');
-    setAFindings('');
+    if (success) {
+      setShowAuditForm(false);
+      setATitle('');
+      setADeptId('');
+      setAAuditorId('');
+      setADate('');
+      setAFindings('');
+    }
   };
 
   const handleIssueSubmit = async (e: React.FormEvent) => {
@@ -134,18 +139,20 @@ export const GovernancePage: React.FC = () => {
       toast.error('Description, owner, and due date are required.');
       return;
     }
-    await createComplianceIssue({
+    const success = await createComplianceIssue({
       auditId: iAuditId || null,
       severity: iSeverity,
       description: iDescription,
       ownerId: iOwnerId,
       dueDate: iDueDate,
     });
-    setShowIssueForm(false);
-    setIAuditId('');
-    setIDescription('');
-    setIOwnerId('');
-    setIDueDate('');
+    if (success) {
+      setShowIssueForm(false);
+      setIAuditId('');
+      setIDescription('');
+      setIOwnerId('');
+      setIDueDate('');
+    }
   };
 
   const sendPolicyReminder = (_policyId: string) => {
@@ -328,7 +335,10 @@ export const GovernancePage: React.FC = () => {
                         <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
                           {policy.status === 'DRAFT' ? (
                             <button
-                              onClick={() => updatePolicyStatus(policy.id, 'ACTIVE')}
+                              onClick={async () => {
+                                await updatePolicyStatus(policy.id, 'ACTIVE');
+                                setPolicyFilter('ACTIVE');
+                              }}
                               className="btn btn-primary"
                               style={{ padding: '0.35rem 0.75rem' }}
                             >
