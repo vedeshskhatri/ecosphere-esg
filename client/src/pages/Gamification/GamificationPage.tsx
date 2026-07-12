@@ -721,19 +721,19 @@ export const GamificationPage: React.FC = () => {
               {filteredChallenges.map((ch) => {
                 // Determine Difficulty badge styling
                 const diffColorMap = {
-                  EASY: { bg: 'rgba(34, 197, 94, 0.15)', text: '#22c55e' },
-                  MEDIUM: { bg: 'rgba(245, 158, 11, 0.15)', text: '#f59e0b' },
-                  HARD: { bg: 'rgba(239, 68, 68, 0.15)', text: '#ef4444' }
+                  EASY: { bg: 'rgba(25, 53, 12, 0.06)', text: '#3D4A28' },
+                  MEDIUM: { bg: 'rgba(104, 125, 49, 0.1)', text: '#687D31' },
+                  HARD: { bg: 'rgba(138, 106, 40, 0.1)', text: '#8A6A28' }
                 };
                 const diffStyle = diffColorMap[ch.difficulty] || diffColorMap.MEDIUM;
 
                 // Determine Status badge styling
                 const statusStyleMap = {
-                  DRAFT: { bg: 'rgba(100, 116, 139, 0.2)', text: '#94a3b8' },
-                  ACTIVE: { bg: 'rgba(34, 197, 94, 0.15)', text: '#22c55e' },
-                  UNDER_REVIEW: { bg: 'rgba(245, 158, 11, 0.15)', text: '#f59e0b' },
-                  COMPLETED: { bg: 'rgba(59, 130, 246, 0.15)', text: '#3b82f6' },
-                  ARCHIVED: { bg: 'rgba(100, 116, 139, 0.15)', text: '#64748b' }
+                  DRAFT: { bg: 'rgba(25, 53, 12, 0.05)', text: '#3D4A28' },
+                  ACTIVE: { bg: 'rgba(104, 125, 49, 0.1)', text: '#687D31' },
+                  UNDER_REVIEW: { bg: 'rgba(138, 106, 40, 0.08)', text: '#8A6A28' },
+                  COMPLETED: { bg: 'rgba(25, 53, 12, 0.08)', text: '#19350C' },
+                  ARCHIVED: { bg: 'rgba(25, 53, 12, 0.04)', text: '#64748b' }
                 };
                 const statusStyle = statusStyleMap[ch.status] || statusStyleMap.DRAFT;
 
@@ -741,7 +741,7 @@ export const GamificationPage: React.FC = () => {
                   <div key={ch.id} className="glass-card" style={{ display: 'flex', flexDirection: 'column' }}>
                     
                     {/* Top Accent Bar */}
-                    <div style={{ height: '4px', background: '#8A6A28', width: '100%' }} />
+                    <div style={{ height: '4px', background: '#687D31', width: '100%' }} />
 
                     {/* Card Content Body */}
                     <div style={{ padding: '1.25rem', display: 'flex', flexDirection: 'column', gap: '0.85rem', flex: 1 }}>
@@ -774,13 +774,13 @@ export const GamificationPage: React.FC = () => {
                       {/* Header with Title and Icon */}
                       <div style={{ display: 'flex', gap: '0.75rem', alignItems: 'flex-start' }}>
                         <div style={{
-                          background: 'rgba(138, 106, 40, 0.12)',
+                          background: 'rgba(25, 53, 12, 0.05)',
                           borderRadius: '8px',
                           padding: '0.5rem',
                           display: 'flex',
                           alignItems: 'center',
                           justifyContent: 'center',
-                          color: '#8A6A28',
+                          color: '#19350C',
                           flexShrink: 0
                         }}>
                           <Trophy size={18} />
@@ -799,8 +799,8 @@ export const GamificationPage: React.FC = () => {
                       <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem', alignItems: 'center', paddingTop: '0.25rem' }}>
                         {ch.category?.name && (
                           <span style={{
-                            background: 'rgba(111, 169, 187, 0.15)',
-                            color: '#6FA9BB',
+                            background: 'rgba(25, 53, 12, 0.05)',
+                            color: '#3D4A28',
                             fontSize: '0.725rem',
                             fontWeight: 600,
                             borderRadius: '999px',
@@ -810,13 +810,13 @@ export const GamificationPage: React.FC = () => {
                           </span>
                         )}
 
-                        <span style={{ fontSize: '0.725rem', color: '#8A6A28', fontWeight: 700, display: 'inline-flex', alignItems: 'center', gap: '3px' }}>
+                        <span style={{ fontSize: '0.725rem', color: '#19350C', fontWeight: 700, display: 'inline-flex', alignItems: 'center', gap: '3px' }}>
                           🏆 {ch.xp} XP
                         </span>
                       </div>
 
                       {/* Deadline Row */}
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '4px', fontSize: '0.75rem', color: '#687D31' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '4px', fontSize: '0.75rem', color: '#3D4A28', fontWeight: 500 }}>
                         <Clock size={12} />
                         <span>Deadline: {ch.deadline ? new Date(ch.deadline).toLocaleDateString() : 'None'}</span>
                       </div>
@@ -915,9 +915,18 @@ export const GamificationPage: React.FC = () => {
                               <button
                                 onClick={() => handleTransitionStatus(ch.id, 'ARCHIVED')}
                                 className="btn-secondary-gamify"
-                                style={{ color: '#ef4444', borderColor: 'rgba(239, 68, 68, 0.2)' }}
+                                style={{ color: '#9a3030', borderColor: 'rgba(154, 48, 48, 0.24)', background: 'rgba(154, 48, 48, 0.05)' }}
                               >
                                 Archive
+                              </button>
+                            )}
+                            {ch.status === 'ARCHIVED' && (
+                              <button
+                                onClick={() => handleTransitionStatus(ch.id, 'ACTIVE')}
+                                className="btn-gamify"
+                                style={{ flex: 1, padding: '0.4rem 0.75rem', fontSize: '0.8rem' }}
+                              >
+                                Reactivate
                               </button>
                             )}
                           </div>
@@ -1345,6 +1354,7 @@ export const GamificationPage: React.FC = () => {
           ───────────────────────────────────────── */}
 
       {/* NEW CHALLENGE MODAL (ADMIN/MANAGER ONLY) */}
+      {/* NEW CHALLENGE MODAL */}
       {showNewChallengeModal && isAdminOrManager && (
         <div style={{
           position: 'fixed',
@@ -1359,12 +1369,12 @@ export const GamificationPage: React.FC = () => {
           justifyContent: 'center',
           zIndex: 1000
         }}>
-          <div className="glass-card" style={{ width: '100%', maxWidth: '520px', padding: '1.5rem', display: 'flex', flexDirection: 'column', gap: '1.25rem', margin: '1rem' }}>
+          <div className="glass-card" style={{ width: '100%', maxWidth: '520px', padding: '1.5rem', display: 'flex', flexDirection: 'column', gap: '1.25rem', margin: '1rem', backgroundColor: '#ffffff', border: '1px solid rgba(25, 53, 12, 0.12)', boxShadow: '0 10px 30px rgba(25, 53, 12, 0.1)' }}>
             <div>
-              <h2 style={{ fontSize: '1.25rem', fontWeight: 800, color: '#f1f5f9', margin: 0 }}>
+              <h2 style={{ fontSize: '1.25rem', fontWeight: 800, color: '#19350C', margin: 0 }}>
                 Draft New Challenge
               </h2>
-              <p style={{ fontSize: '0.8rem', color: '#94a3b8', margin: '4px 0 0 0' }}>
+              <p style={{ fontSize: '0.8rem', color: '#3D4A28', margin: '4px 0 0 0', fontWeight: 500 }}>
                 Fill out the fields to publish or save an ESG eco-challenge.
               </p>
             </div>
@@ -1373,7 +1383,7 @@ export const GamificationPage: React.FC = () => {
               
               {/* Title */}
               <div>
-                <label style={{ display: 'block', color: '#f1f5f9', fontSize: '0.8rem', fontWeight: 600, marginBottom: '0.35rem' }}>
+                <label style={{ display: 'block', color: '#19350C', fontSize: '0.8rem', fontWeight: 600, marginBottom: '0.35rem' }}>
                   Challenge Title *
                 </label>
                 <input
@@ -1382,6 +1392,7 @@ export const GamificationPage: React.FC = () => {
                   className="form-input"
                   value={newTitle}
                   onChange={(e) => setNewTitle(e.target.value)}
+                  style={{ background: '#ffffff', color: '#19350C', border: '1px solid rgba(25, 53, 12, 0.15)' }}
                   required
                 />
               </div>
@@ -1390,36 +1401,38 @@ export const GamificationPage: React.FC = () => {
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
                 {/* Category dropdown */}
                 <div>
-                  <label style={{ display: 'block', color: '#f1f5f9', fontSize: '0.8rem', fontWeight: 600, marginBottom: '0.35rem' }}>
+                  <label style={{ display: 'block', color: '#19350C', fontSize: '0.8rem', fontWeight: 600, marginBottom: '0.35rem' }}>
                     Category *
                   </label>
                   <select
                     className="form-input"
                     value={newCategoryId}
                     onChange={(e) => setNewCategoryId(e.target.value)}
+                    style={{ background: '#ffffff', color: '#19350C', border: '1px solid rgba(25, 53, 12, 0.15)' }}
                     required
                   >
-                    <option value="" disabled>Select Category</option>
+                    <option value="" disabled style={{ background: '#ffffff', color: '#19350C' }}>Select Category</option>
                     {categories.map((c) => (
-                      <option key={c.id} value={c.id}>{c.name}</option>
+                      <option key={c.id} value={c.id} style={{ background: '#ffffff', color: '#19350C' }}>{c.name}</option>
                     ))}
                   </select>
                 </div>
 
                 {/* Difficulty */}
                 <div>
-                  <label style={{ display: 'block', color: '#f1f5f9', fontSize: '0.8rem', fontWeight: 600, marginBottom: '0.35rem' }}>
+                  <label style={{ display: 'block', color: '#19350C', fontSize: '0.8rem', fontWeight: 600, marginBottom: '0.35rem' }}>
                     Difficulty *
                   </label>
                   <select
                     className="form-input"
                     value={newDifficulty}
                     onChange={(e) => setNewDifficulty(e.target.value as any)}
+                    style={{ background: '#ffffff', color: '#19350C', border: '1px solid rgba(25, 53, 12, 0.15)' }}
                     required
                   >
-                    <option value="EASY">Easy</option>
-                    <option value="MEDIUM">Medium</option>
-                    <option value="HARD">Hard</option>
+                    <option value="EASY" style={{ background: '#ffffff', color: '#19350C' }}>Easy</option>
+                    <option value="MEDIUM" style={{ background: '#ffffff', color: '#19350C' }}>Medium</option>
+                    <option value="HARD" style={{ background: '#ffffff', color: '#19350C' }}>Hard</option>
                   </select>
                 </div>
               </div>
@@ -1428,7 +1441,7 @@ export const GamificationPage: React.FC = () => {
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
                 {/* XP */}
                 <div>
-                  <label style={{ display: 'block', color: '#f1f5f9', fontSize: '0.8rem', fontWeight: 600, marginBottom: '0.35rem' }}>
+                  <label style={{ display: 'block', color: '#19350C', fontSize: '0.8rem', fontWeight: 600, marginBottom: '0.35rem' }}>
                     XP Value *
                   </label>
                   <input
@@ -1437,13 +1450,14 @@ export const GamificationPage: React.FC = () => {
                     className="form-input"
                     value={newXp}
                     onChange={(e) => setNewXp(e.target.value)}
+                    style={{ background: '#ffffff', color: '#19350C', border: '1px solid rgba(25, 53, 12, 0.15)' }}
                     required
                   />
                 </div>
 
                 {/* Deadline */}
                 <div>
-                  <label style={{ display: 'block', color: '#f1f5f9', fontSize: '0.8rem', fontWeight: 600, marginBottom: '0.35rem' }}>
+                  <label style={{ display: 'block', color: '#19350C', fontSize: '0.8rem', fontWeight: 600, marginBottom: '0.35rem' }}>
                     Deadline
                   </label>
                   <input
@@ -1451,6 +1465,7 @@ export const GamificationPage: React.FC = () => {
                     className="form-input"
                     value={newDeadline}
                     onChange={(e) => setNewDeadline(e.target.value)}
+                    style={{ background: '#ffffff', color: '#19350C', border: '1px solid rgba(25, 53, 12, 0.15)' }}
                   />
                 </div>
               </div>
@@ -1462,16 +1477,16 @@ export const GamificationPage: React.FC = () => {
                   id="evidence-req-toggle"
                   checked={newEvidenceRequired}
                   onChange={(e) => setNewEvidenceRequired(e.target.checked)}
-                  style={{ width: '16px', height: '16px', accentColor: '#f97316', cursor: 'pointer' }}
+                  style={{ width: '16px', height: '16px', accentColor: '#687D31', cursor: 'pointer' }}
                 />
-                <label htmlFor="evidence-req-toggle" style={{ color: '#f1f5f9', fontSize: '0.85rem', cursor: 'pointer', fontWeight: 600 }}>
+                <label htmlFor="evidence-req-toggle" style={{ color: '#19350C', fontSize: '0.85rem', cursor: 'pointer', fontWeight: 600 }}>
                   Proof / Evidence Document Required
                 </label>
               </div>
 
               {/* Description */}
               <div>
-                <label style={{ display: 'block', color: '#f1f5f9', fontSize: '0.8rem', fontWeight: 600, marginBottom: '0.35rem' }}>
+                <label style={{ display: 'block', color: '#19350C', fontSize: '0.8rem', fontWeight: 600, marginBottom: '0.35rem' }}>
                   Description *
                 </label>
                 <textarea
@@ -1480,6 +1495,7 @@ export const GamificationPage: React.FC = () => {
                   rows={3}
                   value={newDescription}
                   onChange={(e) => setNewDescription(e.target.value)}
+                  style={{ resize: 'none', background: '#ffffff', color: '#19350C', border: '1px solid rgba(25, 53, 12, 0.15)' }}
                   required
                 />
               </div>
@@ -1489,15 +1505,32 @@ export const GamificationPage: React.FC = () => {
                 <button
                   type="button"
                   onClick={() => setShowNewChallengeModal(false)}
-                  className="btn-secondary-gamify"
-                  style={{ padding: '0.5rem 1rem' }}
+                  style={{
+                    background: 'rgba(25, 53, 12, 0.05)',
+                    border: '1px solid rgba(25, 53, 12, 0.1)',
+                    borderRadius: '8px',
+                    color: '#3D4A28',
+                    padding: '0.5rem 1rem',
+                    fontWeight: 600,
+                    cursor: 'pointer',
+                    fontSize: '0.875rem'
+                  }}
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
-                  className="btn-gamify"
-                  style={{ padding: '0.5rem 1rem' }}
+                  style={{
+                    background: '#687D31',
+                    border: 'none',
+                    borderRadius: '8px',
+                    color: '#fff',
+                    padding: '0.5rem 1rem',
+                    fontWeight: 600,
+                    cursor: 'pointer',
+                    fontSize: '0.875rem',
+                    boxShadow: '0 4px 12px rgba(104, 125, 49, 0.2)'
+                  }}
                 >
                   Create Challenge
                 </button>
