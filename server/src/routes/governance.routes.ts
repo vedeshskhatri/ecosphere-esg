@@ -6,6 +6,7 @@ import { requireAuth, requireRole, AuthRequest } from '../middleware/auth';
 import { createNotification } from '../services/NotificationService';
 import { emitToAll } from '../socket/eventBus';
 import { ScoringEngine } from '../services/ScoringEngine';
+import { EmailService } from '../services/EmailService';
 
 const router = Router();
 
@@ -312,10 +313,10 @@ router.post('/issues', requireAuth, requireRole('ADMIN', 'MANAGER'), validate(cr
       },
     });
 
-    // Fetch owner details for email
+    // Fetch owner details for email and scoring
     const owner = await prisma.user.findUnique({
       where: { id: ownerId },
-      select: { name: true, email: true },
+      select: { name: true, email: true, departmentId: true },
     });
 
     // Notify issue owner
@@ -351,10 +352,6 @@ router.post('/issues', requireAuth, requireRole('ADMIN', 'MANAGER'), validate(cr
     });
 
     // Recalculate scores for owner's department
-    const owner = await prisma.user.findUnique({
-      where: { id: ownerId },
-      select: { departmentId: true }
-    });
     if (owner && owner.departmentId) {
       await ScoringEngine.recalculateAndEmit(owner.departmentId);
     }
