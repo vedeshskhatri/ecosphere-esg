@@ -57,13 +57,13 @@ router.get('/', requireAuth, async (req: AuthRequest, res: Response) => {
       (async () => {
         const transactions = await prisma.carbonTransaction.findMany({
           where: {
-            createdAt: {
+            date: {
               gte: new Date(Date.now() - 365 * 24 * 60 * 60 * 1000)
             }
           },
           select: {
             co2Kg: true,
-            createdAt: true
+            date: true
           }
         });
 
@@ -81,7 +81,7 @@ router.get('/', requireAuth, async (req: AuthRequest, res: Response) => {
 
         return monthsList.map(m => {
           const monthTransactions = transactions.filter(t => {
-            const txDate = new Date(t.createdAt);
+            const txDate = new Date(t.date);
             return txDate.getFullYear() === m.year && txDate.getMonth() === m.monthIndex;
           });
           const totalCo2 = monthTransactions.reduce((sum, t) => sum + Number(t.co2Kg), 0);
