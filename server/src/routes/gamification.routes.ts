@@ -345,7 +345,7 @@ router.patch('/challenges/participations/:id/approve', requireAuth, requireRole(
     });
 
     // Realtime events
-    emitToUser(employeeId, 'notification:new', { title, message });
+    emitToUser(employeeId, 'notification:new', { title, message, type: 'CHALLENGE_APPROVED', xpAwarded: challengeXp, activityTitle: challengeTitle });
     emitToAll('leaderboard:update', {});
     emitToAll('activity:feed', { type: 'CHALLENGE_APPROVED', employeeName, challengeTitle });
 
