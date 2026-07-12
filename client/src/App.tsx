@@ -184,10 +184,12 @@ const AuthenticatedLayout: React.FC = () => {
     socket.on('notification:new', (notification) => {
       console.log('[Socket] New notification received:', notification);
       addNotification(notification);
+      fetchCurrentUser();
     });
 
     socket.on('badge:awarded', (data) => {
       console.log('[Socket] Badge awarded:', data);
+      fetchCurrentUser();
     });
 
     return () => {
@@ -195,7 +197,7 @@ const AuthenticatedLayout: React.FC = () => {
       socket.off('badge:awarded');
       socket.disconnect();
     };
-  }, [user?.id, setNotifications, addNotification]);
+  }, [user?.id, setNotifications, addNotification, fetchCurrentUser]);
 
   // Close mobile sidebar on route change
   const handleMobileClose = () => setMobileSidebarOpen(false);

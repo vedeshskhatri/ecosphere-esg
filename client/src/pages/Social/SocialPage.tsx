@@ -207,7 +207,11 @@ export const SocialPage: React.FC = () => {
       const res = await api.patch(`/social/participations/${id}/approve`);
       if (res.data && res.data.success) {
         toast.success('Participation approved.');
-        await Promise.all([fetchParticipations(), fetchActivities()]);
+        await Promise.all([
+          fetchParticipations(),
+          fetchActivities(),
+          useAuthStore.getState().fetchCurrentUser()
+        ]);
       }
     } catch (error: any) {
       toast.error(error.response?.data?.error || 'Failed to approve participation.');
@@ -224,7 +228,11 @@ export const SocialPage: React.FC = () => {
       const res = await api.patch(`/social/participations/${id}/reject`);
       if (res.data && res.data.success) {
         toast.success('Participation rejected.');
-        await Promise.all([fetchParticipations(), fetchActivities()]);
+        await Promise.all([
+          fetchParticipations(),
+          fetchActivities(),
+          useAuthStore.getState().fetchCurrentUser()
+        ]);
       }
     } catch (error: any) {
       toast.error(error.response?.data?.error || 'Failed to reject participation.');
@@ -463,7 +471,7 @@ export const SocialPage: React.FC = () => {
                       </h3>
 
                       {/* Description */}
-                      <p className="text-truncate-2" style={{ color: '#687D31', fontSize: '0.8125rem', margin: 0, lineHeight: 1.55, flex: 1 }}>
+                      <p className="text-truncate-2" style={{ color: '#2C3E20', fontSize: '0.8125rem', margin: 0, lineHeight: 1.55, flex: 1, fontWeight: 500 }}>
                         {act.description}
                       </p>
 
@@ -473,13 +481,14 @@ export const SocialPage: React.FC = () => {
                           <Award size={16} />
                           <span>⚡ {act.xpReward} XP</span>
                         </div>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '4px', color: '#687D31', fontSize: '0.75rem' }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '4px', color: '#3D4A28', fontSize: '0.75rem', fontWeight: 600 }}>
                           <Clock size={12} />
                           <span>
                             {act.deadline ? new Date(act.deadline).toLocaleDateString() : 'No Deadline'}
                           </span>
                         </div>
                       </div>
+
 
                       {/* Bottom action button or status pill */}
                       <div style={{ marginTop: '0.5rem' }}>
@@ -735,7 +744,7 @@ export const SocialPage: React.FC = () => {
               <h2 style={{ color: '#19350C', fontWeight: 800, fontSize: '1.25rem', margin: 0 }}>
                 Join Activity
               </h2>
-              <p style={{ color: '#687D31', fontSize: '0.85rem', margin: '4px 0 0 0' }}>
+              <p style={{ color: '#3D4A28', fontSize: '0.85rem', margin: '4px 0 0 0', fontWeight: 500 }}>
                 Confirm your participation in <strong>{showJoinModal.activity.title}</strong>
               </p>
             </div>
@@ -773,7 +782,7 @@ export const SocialPage: React.FC = () => {
                     <p style={{ margin: 0, fontSize: '0.875rem', fontWeight: 600, color: '#19350C' }}>
                       {proofFile ? proofFile.name : 'Upload proof file'}
                     </p>
-                    <p style={{ margin: '4px 0 0 0', fontSize: '0.75rem', color: '#687D31' }}>
+                    <p style={{ margin: '4px 0 0 0', fontSize: '0.75rem', color: '#3D4A28', fontWeight: 500 }}>
                       Drag & drop or click to select
                     </p>
                     <input
