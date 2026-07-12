@@ -335,7 +335,7 @@ router.patch('/participations/:id/approve', requireAuth, requireRole('ADMIN', 'M
     const message = `Your participation in ${activityTitle} has been approved!`;
 
     // Realtime events
-    emitToUser(employeeId, 'notification:new', { title, message });
+    emitToUser(employeeId, 'notification:new', { title, message, type: 'CSR_APPROVED', xpAwarded: xpReward, activityTitle });
     emitToAll('activity:feed', { type: 'CSR_APPROVED', employeeName, activityTitle });
 
     // Check and award badges (async, non-blocking side-effect)
