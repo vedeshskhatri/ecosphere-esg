@@ -89,5 +89,92 @@ export class ForecastEngine {
 
     return result;
   }
+
+  /**
+   * Detects emission anomalies (sudden spikes > 30% above the rolling average of the past 3 months).
+   */
+  static detectAnomalies(historicalData: { month: string; total: number }[]) {
+    const result: { month: string; total: number; rollingAvg: number; deviationPercent: number; isAnomaly: boolean }[] = [];
+
+    for (let i = 0; i < historicalData.length; i++) {
+      const current = historicalData[i];
+      let rollingAvg = 0;
+      let count = 0;
+
+      // Calculate rolling average of the preceding 3 months
+      for (let j = Math.max(0, i - 3); j < i; j++) {
+        rollingAvg += historicalData[j].total;
+        count++;
+      }
+
+      rollingAvg = count > 0 ? rollingAvg / count : current.total;
+
+      const deviationPercent = rollingAvg > 0 ? ((current.total - rollingAvg) / rollingAvg) * 100 : 0;
+      const isAnomaly = i >= 3 && deviationPercent > 30; // only flag after at least 3 months history
+
+      result.push({
+        month: current.month,
+        total: Math.round(current.total * 100) / 100,
+        rollingAvg: Math.round(rollingAvg * 100) / 100,
+        deviationPercent: Math.round(deviationPercent * 10) / 10,
+        isAnomaly,
+      });
+    }
+
+    return result;
+  }
+
+  /**
+   * Generates tailored actionable recommendations based on department goal performance.
+   */
+  static generateRecommendations(departmentGoals: { departmentName: string; departmentCode: string; currentCo2: number; targetCo2: number }[]) {
+    return departmentGoals.map((dept) => {
+      const current = Number(dept.currentCo2);
+      const target = Number(dept.targetCo2);
+      
+      const deviationPercent = target > 0 ? ((current - target) / target) * 100 : 0;
+      const deviationText = deviationPercent > 0 ? `${deviationPercent.toFixed(0)}% above` : `${Math.abs(deviationPercent).toFixed(0)}% below`;
+      
+      let recommendation = '';
+
+      if (deviationPercent > 0) {
+        // High emissions recommendations based on dept code
+        switch (dept.departmentCode) {
+          case 'MFG':
+            recommendation = `Manufacturing dept is ${deviationText} target — upgrading to high-efficiency induction furnaces would reduce carbon footprint by ~22 tCO₂.`;
+            break;
+          case 'LOG':
+            recommendation = `Logistics dept is ${deviationText} target — switching 30% of the fleet vehicles to electric models would reduce footprint by ~18 tCO₂.`;
+            break;
+          case 'COR':
+            recommendation = `Corporate dept is ${deviationText} target — implementing automated HVAC controls and smart LED sensors would reduce footprint by ~3.5 tCO₂.`;
+            break;
+          default:
+            recommendation = `${dept.departmentName} dept is ${deviationText} target — conducting a waste stream audit is recommended to identify reduction potential.`;
+        }
+      } else {
+        // Performing well recommendations
+        switch (dept.departmentCode) {
+          case 'MFG':
+            recommendation = `Manufacturing is performing well (${deviationText} target). Recommend auditing raw material suppliers to expand Scope 3 offsets.`;
+            break;
+          case 'LOG':
+            recommendation = `Logistics is performing well (${deviationText} target). Recommend optimizing route planning algorithm to lock in these emission cuts.`;
+            break;
+          default:
+            recommendation = `${dept.departmentName} is performing well (${deviationText} target). Maintain current sustainability guidelines and log positive offsets.`;
+        }
+      }
+
+      return {
+        departmentName: dept.departmentName,
+        departmentCode: dept.departmentCode,
+        currentCo2: Math.round(current * 100) / 100,
+        targetCo2: Math.round(target * 100) / 100,
+        deviationPercent: Math.round(deviationPercent * 10) / 10,
+        recommendation,
+      };
+    });
+  }
 }
 export default ForecastEngine;

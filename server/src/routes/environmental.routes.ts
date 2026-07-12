@@ -315,10 +315,49 @@ router.get('/carbon-transactions/forecast', requireAuth, async (req, res) => {
         return dateA.getTime() - dateB.getTime();
       });
 
-    // Generate forecast using simple linear regression
+    // 1. Generate forecast using simple linear regression
     const forecastData = ForecastEngine.generateForecast(historicalTrend);
 
-    return res.json({ success: true, data: forecastData });
+    // 2. Detect anomalies in history
+    const anomalies = ForecastEngine.detectAnomalies(historicalTrend);
+
+    // 3. Query department goals to generate recommendations based on target deviation
+    const departments = await prisma.department.findMany({
+      where: { status: 'ACTIVE' },
+      include: {
+        environmentalGoals: {
+          where: { status: { in: ['ACTIVE', 'ON_TRACK', 'AT_RISK'] } },
+          select: { currentCo2: true, targetCo2: true }
+        }
+      }
+    });
+
+    const departmentGoalData = departments.map((d) => {
+      let currentCo2 = 0;
+      let targetCo2 = 0;
+      d.environmentalGoals.forEach((g) => {
+        currentCo2 += Number(g.currentCo2);
+        targetCo2 += Number(g.targetCo2);
+      });
+
+      return {
+        departmentName: d.name,
+        departmentCode: d.code,
+        currentCo2,
+        targetCo2,
+      };
+    });
+
+    const recommendations = ForecastEngine.generateRecommendations(departmentGoalData);
+
+    return res.json({
+      success: true,
+      data: {
+        forecast: forecastData,
+        anomalies,
+        recommendations,
+      }
+    });
   } catch (error) {
     console.error('[Environmental] Error calculating forecast:', error);
     return res.status(500).json({ success: false, error: 'Failed to calculate emissions forecast' });

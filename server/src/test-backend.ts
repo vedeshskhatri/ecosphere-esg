@@ -91,7 +91,7 @@ async function runTests() {
   // 9. AI Carbon Forecast Test
   try {
     const res = await axios.get(`${BASE_URL}/environmental/carbon-transactions/forecast`, authHeaders);
-    console.log('✅ AI Carbon Forecast: SUCCESS, found', res.data.data.length, 'points (including projections)');
+    console.log('✅ AI Carbon Forecast: SUCCESS, found', res.data.data.forecast.length, 'forecast points,', res.data.data.anomalies.length, 'anomaly checks, and', res.data.data.recommendations.length, 'smart recommendations');
   } catch (error: any) {
     console.error('❌ AI Carbon Forecast failed:', error.response?.data || error.message);
   }
