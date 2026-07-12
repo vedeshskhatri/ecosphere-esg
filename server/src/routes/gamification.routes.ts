@@ -1,416 +1,581 @@
-import { Router } from 'express';
+import { Router, Response } from 'express';
 import { z } from 'zod';
 import multer from 'multer';
-import * as path from 'path';
-import * as fs from 'fs';
+import path from 'path';
+import fs from 'fs';
 import prisma from '../lib/prisma';
-import { validate } from '../middleware/validate';
 import { requireAuth, requireRole, AuthRequest } from '../middleware/auth';
-import { RewardRedemptionService } from '../services/RewardRedemption';
-import { BadgeAwardEngine } from '../services/BadgeAwardEngine';
-import { createNotification } from '../services/NotificationService';
 import { emitToAll, emitToUser } from '../socket/eventBus';
+import { checkAndAwardBadges } from '../services/BadgeAwardEngine';
 
 const router = Router();
 
-// Configure Multer for challenge proof uploads
-const uploadDir = process.env.UPLOAD_DIR || './uploads';
-if (!fs.existsSync(uploadDir)) {
-  fs.mkdirSync(uploadDir, { recursive: true });
-}
-
+// Configure multer storage
 const storage = multer.diskStorage({
-  destination: (req: any, file: any, cb: any) => {
-    cb(null, uploadDir);
-  },
-  filename: (req: any, file: any, cb: any) => {
-    const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1e9);
-    cb(null, 'challenge-' + file.fieldname + '-' + uniqueSuffix + path.extname(file.originalname));
-  },
-});
-
-const upload = multer({
-  storage,
-  limits: { fileSize: 5 * 1024 * 1024 }, // 5MB limit
-  fileFilter: (req: any, file: any, cb: any) => {
-    const filetypes = /jpeg|jpg|png|pdf/;
-    const extname = filetypes.test(path.extname(file.originalname).toLowerCase());
-    const mimetype = filetypes.test(file.mimetype);
-    if (mimetype && extname) {
-      return cb(null, true);
+  destination: (req, file, cb) => {
+    const dir = './uploads';
+    if (!fs.existsSync(dir)) {
+      fs.mkdirSync(dir, { recursive: true });
     }
-    cb(new Error('Only images (jpg/jpeg/png) or PDF files are allowed'));
+    cb(null, dir);
   },
+  filename: (req, file, cb) => {
+    cb(null, Date.now() + path.extname(file.originalname));
+  }
 });
 
-// Validation Schemas
+const upload = multer({ storage });
+
+// Zod Validation Schemas
 const createChallengeSchema = z.object({
-  title: z.string().min(2, 'Title must be at least 2 characters'),
-  categoryId: z.string().uuid(),
-  description: z.string().min(5, 'Description must be at least 5 characters'),
-  xp: z.number().int().positive('XP reward must be positive'),
+  title: z.string({ required_error: 'Title is required' }).min(1, 'Title cannot be empty'),
+  categoryId: z.string({ required_error: 'Category ID is required' }),
+  description: z.string({ required_error: 'Description is required' }).min(1, 'Description cannot be empty'),
+  xp: z.number().int().nonnegative(),
   difficulty: z.enum(['EASY', 'MEDIUM', 'HARD']),
-  evidenceRequired: z.boolean().optional(),
-  deadline: z.string().transform((val) => new Date(val)).optional().nullable(),
+  evidenceRequired: z.boolean().default(false),
+  deadline: z.string().optional().nullable()
 });
 
-const updateChallengeStatusSchema = z.object({
-  status: z.enum(['DRAFT', 'ACTIVE', 'COMPLETED']),
-});
+// Helper to clean up uploaded files on error
+const cleanupUploadedFile = (req: AuthRequest) => {
+  if (req.file) {
+    try {
+      fs.unlinkSync(req.file.path);
+    } catch (err) {
+      console.error('[Gamification] Failed to clean up uploaded file:', err);
+    }
+  }
+};
 
-const updateProgressSchema = z.object({
-  progress: z.preprocess(
-    (val) => Number(val),
-    z.number().int().min(0).max(100)
-  ),
-  notes: z.string().optional().nullable(),
-});
-
-const redeemRewardSchema = z.object({
-  rewardId: z.string().uuid(),
-});
-
-// ─────────────────────────────────────────
+// ─────────────────────────────────────────────────────────────────────────────
 // CHALLENGES
-// ─────────────────────────────────────────
+// ─────────────────────────────────────────────────────────────────────────────
 
-router.get('/challenges', requireAuth, async (req, res) => {
+// GET /challenges - List all challenges
+router.get('/challenges', requireAuth, async (req: AuthRequest, res: Response) => {
   try {
-    const challenges = await prisma.challenge.findMany({
+    const statusParam = req.query.status as string;
+    const where: any = {};
+
+    if (statusParam) {
+      const validStatuses = ['DRAFT', 'ACTIVE', 'UNDER_REVIEW', 'COMPLETED', 'ARCHIVED'];
+      if (!validStatuses.includes(statusParam)) {
+        return res.status(400).json({ success: false, error: 'Invalid status parameter' });
+      }
+      where.status = statusParam;
+    }
+
+    const rawChallenges = await prisma.challenge.findMany({
+      where,
       include: {
-        category: true,
-        participations: {
-          include: {
-            employee: { select: { id: true, name: true, email: true, departmentId: true } },
-          },
+        category: {
+          select: { name: true }
         },
-      },
-      orderBy: { createdAt: 'desc' },
+        participations: {
+          select: {
+            employeeId: true,
+            approvalStatus: true
+          }
+        }
+      }
     });
+
+    const challenges = rawChallenges.map(challenge => {
+      const { participations, ...rest } = challenge;
+      const currentUserParticipation = participations.find(p => p.employeeId === req.user?.id);
+      const joinStatus = currentUserParticipation ? currentUserParticipation.approvalStatus : null;
+
+      return {
+        ...rest,
+        participantsCount: participations.length,
+        joinStatus
+      };
+    });
+
     return res.json({ success: true, data: challenges });
   } catch (error: any) {
-    return res.status(500).json({ success: false, error: error.message });
+    console.error('[Gamification] Error fetching challenges:', error);
+    return res.status(500).json({ success: false, error: error.message || 'Failed to fetch challenges' });
   }
 });
 
-router.post('/challenges', requireAuth, requireRole('ADMIN', 'MANAGER'), validate(createChallengeSchema), async (req: AuthRequest, res) => {
-  const { title, categoryId, description, xp, difficulty, evidenceRequired, deadline } = req.body;
+// POST /challenges - Create a challenge
+router.post('/challenges', requireAuth, requireRole('ADMIN', 'MANAGER'), async (req: AuthRequest, res: Response) => {
   try {
+    const parsed = createChallengeSchema.parse(req.body);
+
+    if (!req.user) {
+      return res.status(401).json({ success: false, error: 'Unauthorized: Missing user information' });
+    }
+
     const challenge = await prisma.challenge.create({
       data: {
-        title,
-        categoryId,
-        description,
-        xp,
-        difficulty,
-        evidenceRequired: evidenceRequired || false,
-        deadline,
+        title: parsed.title,
+        categoryId: parsed.categoryId,
+        description: parsed.description,
+        xp: parsed.xp,
+        difficulty: parsed.difficulty,
+        evidenceRequired: parsed.evidenceRequired,
+        deadline: parsed.deadline ? new Date(parsed.deadline) : null,
         status: 'DRAFT',
-        createdById: req.user!.id,
-      },
+        createdById: req.user.id
+      }
     });
+
     return res.status(201).json({ success: true, data: challenge });
   } catch (error: any) {
-    return res.status(500).json({ success: false, error: error.message });
+    console.error('[Gamification] Error creating challenge:', error);
+    if (error instanceof z.ZodError) {
+      return res.status(400).json({ success: false, error: error.errors[0]?.message || 'Validation failed' });
+    }
+    return res.status(500).json({ success: false, error: error.message || 'Failed to create challenge' });
   }
 });
 
-router.put('/challenges/:id/status', requireAuth, requireRole('ADMIN', 'MANAGER'), validate(updateChallengeStatusSchema), async (req, res) => {
-  const { id } = req.params;
-  const { status } = req.body;
+// PATCH /challenges/:id/status - Update challenge status
+router.patch('/challenges/:id/status', requireAuth, requireRole('ADMIN', 'MANAGER'), async (req: AuthRequest, res: Response) => {
   try {
-    const challenge = await prisma.challenge.update({
-      where: { id },
-      data: { status },
+    const { id } = req.params;
+    const { status: newStatus } = req.body;
+
+    if (!newStatus) {
+      return res.status(400).json({ success: false, error: 'Status is required' });
+    }
+
+    const challenge = await prisma.challenge.findUnique({
+      where: { id }
     });
-    return res.json({ success: true, data: challenge });
-  } catch (error: any) {
-    return res.status(500).json({ success: false, error: error.message });
-  }
-});
 
-// ─────────────────────────────────────────
-// CHALLENGE PARTICIPATIONS
-// ─────────────────────────────────────────
-
-router.post('/challenges/:id/join', requireAuth, async (req: AuthRequest, res) => {
-  const challengeId = req.params.id;
-  const userId = req.user!.id;
-
-  try {
-    const challenge = await prisma.challenge.findUnique({ where: { id: challengeId } });
     if (!challenge) {
       return res.status(404).json({ success: false, error: 'Challenge not found' });
     }
-    if (challenge.status !== 'ACTIVE') {
-      return res.status(400).json({ success: false, error: 'Challenge is not currently active' });
+
+    const currentStatus = challenge.status;
+    const validStatuses = ['DRAFT', 'ACTIVE', 'UNDER_REVIEW', 'COMPLETED', 'ARCHIVED'];
+    if (!validStatuses.includes(newStatus)) {
+      return res.status(400).json({ success: false, error: 'Invalid status value' });
     }
 
-    const existing = await prisma.challengePart.findFirst({
-      where: { challengeId, employeeId: userId },
+    let isValidTransition = false;
+    if (newStatus === 'ARCHIVED') {
+      isValidTransition = true;
+    } else if (currentStatus === 'DRAFT' && newStatus === 'ACTIVE') {
+      isValidTransition = true;
+    } else if (currentStatus === 'ACTIVE' && newStatus === 'UNDER_REVIEW') {
+      isValidTransition = true;
+    } else if (currentStatus === 'UNDER_REVIEW' && newStatus === 'COMPLETED') {
+      isValidTransition = true;
+    }
+
+    if (!isValidTransition) {
+      return res.status(400).json({
+        success: false,
+        error: `Invalid transition from ${currentStatus} to ${newStatus}`
+      });
+    }
+
+    const updatedChallenge = await prisma.challenge.update({
+      where: { id },
+      data: { status: newStatus }
     });
-    if (existing) {
+
+    return res.json({ success: true, data: updatedChallenge });
+  } catch (error: any) {
+    console.error('[Gamification] Error updating challenge status:', error);
+    return res.status(500).json({ success: false, error: error.message || 'Failed to update challenge status' });
+  }
+});
+
+// POST /challenges/:id/join - Join a challenge
+router.post('/challenges/:id/join', requireAuth, upload.single('proof'), async (req: AuthRequest, res: Response) => {
+  try {
+    const { id } = req.params;
+
+    if (!req.user) {
+      cleanupUploadedFile(req);
+      return res.status(401).json({ success: false, error: 'Unauthorized: Missing user information' });
+    }
+
+    const challenge = await prisma.challenge.findUnique({
+      where: { id }
+    });
+
+    if (!challenge) {
+      cleanupUploadedFile(req);
+      return res.status(404).json({ success: false, error: 'Challenge not found' });
+    }
+
+    if (challenge.status !== 'ACTIVE') {
+      cleanupUploadedFile(req);
+      return res.status(400).json({ success: false, error: 'Challenge is not active' });
+    }
+
+    // Check if already joined
+    const existingPart = await prisma.challengePart.findUnique({
+      where: {
+        challengeId_employeeId: {
+          challengeId: id,
+          employeeId: req.user.id
+        }
+      }
+    });
+
+    if (existingPart) {
+      cleanupUploadedFile(req);
       return res.status(400).json({ success: false, error: 'Already joined this challenge' });
+    }
+
+    if (challenge.evidenceRequired && !req.file) {
+      return res.status(400).json({ success: false, error: 'Proof file required' });
     }
 
     const participation = await prisma.challengePart.create({
       data: {
-        challengeId,
-        employeeId: userId,
-        progress: 0,
+        challengeId: id,
+        employeeId: req.user.id,
         approvalStatus: 'PENDING',
-      },
+        proofUrl: req.file ? req.file.filename : null
+      }
     });
 
     return res.status(201).json({ success: true, data: participation });
   } catch (error: any) {
-    return res.status(500).json({ success: false, error: error.message });
+    cleanupUploadedFile(req);
+    console.error('[Gamification] Error joining challenge:', error);
+    return res.status(500).json({ success: false, error: error.message || 'Failed to join challenge' });
   }
 });
 
-router.post('/challenges/:id/progress', requireAuth, upload.single('proof'), validate(updateProgressSchema), async (req: AuthRequest, res) => {
-  const challengeId = req.params.id;
-  const userId = req.user!.id;
-  const { progress, notes } = req.body;
-  const file = req.file;
-
+// GET /challenges/participations - Get all pending challenge participations
+router.get('/challenges/participations', requireAuth, requireRole('ADMIN', 'MANAGER'), async (req: AuthRequest, res: Response) => {
   try {
-    const challenge = await prisma.challenge.findUnique({ where: { id: challengeId } });
-    if (!challenge) {
-      return res.status(404).json({ success: false, error: 'Challenge not found' });
-    }
+    const participations = await prisma.challengePart.findMany({
+      where: {
+        approvalStatus: 'PENDING'
+      },
+      include: {
+        employee: {
+          select: { name: true }
+        },
+        challenge: {
+          select: { title: true }
+        }
+      }
+    });
 
-    let participation = await prisma.challengePart.findFirst({
-      where: { challengeId, employeeId: userId },
+    const data = participations.map(p => ({
+      id: p.id,
+      challengeId: p.challengeId,
+      challengeTitle: p.challenge?.title || '',
+      employeeId: p.employeeId,
+      employeeName: p.employee?.name || '',
+      proofUrl: p.proofUrl,
+      approvalStatus: p.approvalStatus,
+      xpAwarded: p.xpAwarded,
+      createdAt: p.createdAt
+    }));
+
+    return res.json({ success: true, data });
+  } catch (error: any) {
+    console.error('[Gamification] Error fetching pending challenge participations:', error);
+    return res.status(500).json({ success: false, error: error.message || 'Failed to fetch pending participations' });
+  }
+});
+
+// PATCH /challenges/participations/:id/approve - Approve challenge participation
+router.patch('/challenges/participations/:id/approve', requireAuth, requireRole('ADMIN', 'MANAGER'), async (req: AuthRequest, res: Response) => {
+  try {
+    const { id } = req.params;
+
+    const participation = await prisma.challengePart.findUnique({
+      where: { id },
+      include: {
+        challenge: true,
+        employee: true
+      }
     });
 
     if (!participation) {
-      // Auto-join if not already joined
-      participation = await prisma.challengePart.create({
-        data: { challengeId, employeeId: userId, progress: 0, approvalStatus: 'PENDING' },
-      });
+      return res.status(404).json({ success: false, error: 'Participation not found' });
     }
 
-    if (participation.approvalStatus === 'APPROVED') {
-      return res.status(400).json({ success: false, error: 'Challenge already marked completed and approved' });
+    if (participation.approvalStatus !== 'PENDING') {
+      return res.status(400).json({ success: false, error: 'Participation is not pending approval' });
     }
 
-    if (challenge.evidenceRequired && progress >= 100 && !file) {
-      return res.status(400).json({ success: false, error: 'Evidence file proof is required for 100% completion of this challenge' });
-    }
+    const challengeXp = participation.challenge.xp;
+    const employeeId = participation.employeeId;
+    const challengeTitle = participation.challenge.title;
+    const employeeName = participation.employee.name;
 
-    const isCompleteSubmit = progress >= 100;
-
-    const updated = await prisma.challengePart.update({
-      where: { id: participation.id },
-      data: {
-        progress,
-        proofUrl: file ? `/uploads/${file.filename}` : participation.proofUrl,
-        approvalStatus: isCompleteSubmit ? 'PENDING' : 'PENDING', // Keep pending for verification
-      },
-    });
-
-    if (isCompleteSubmit) {
-      // Notify managers
-      await createNotification({
-        userId: challenge.createdById || userId,
-        type: 'POLICY_REMINDER', // general category alert
-        title: 'Challenge Completion Awaiting Review',
-        message: `Employee completed challenge: "${challenge.title}". Review proof.`,
-        refType: 'ChallengePart',
-        refId: updated.id,
-      });
-    }
-
-    return res.json({ success: true, data: updated });
-  } catch (error: any) {
-    return res.status(500).json({ success: false, error: error.message });
-  }
-});
-
-// Managers pending list
-router.get('/completions/pending', requireAuth, requireRole('ADMIN', 'MANAGER'), async (req, res) => {
-  try {
-    const pendings = await prisma.challengePart.findMany({
-      where: {
-        progress: 100,
-        approvalStatus: 'PENDING',
-      },
-      include: {
-        challenge: true,
-        employee: {
-          select: {
-            id: true,
-            name: true,
-            email: true,
-            department: { select: { id: true, name: true } },
-          },
-        },
-      },
-      orderBy: { updatedAt: 'desc' },
-    });
-    return res.json({ success: true, data: pendings });
-  } catch (error: any) {
-    return res.status(500).json({ success: false, error: error.message });
-  }
-});
-
-// Approve Challenge
-router.patch('/completions/:id/approve', requireAuth, requireRole('ADMIN', 'MANAGER'), async (req: AuthRequest, res) => {
-  const { id } = req.params;
-
-  try {
-    const comp = await prisma.challengePart.findUnique({
-      where: { id },
-      include: { challenge: true, employee: true },
-    });
-    if (!comp) {
-      return res.status(404).json({ success: false, error: 'Challenge log not found' });
-    }
-    if (comp.approvalStatus !== 'PENDING') {
-      return res.status(400).json({ success: false, error: 'Completion already processed' });
-    }
-
-    const updated = await prisma.$transaction(async (tx) => {
-      // 1. Approve completion
-      const c = await tx.challengePart.update({
+    const updatedParticipation = await prisma.$transaction(async (tx) => {
+      const p = await tx.challengePart.update({
         where: { id },
-        data: { approvalStatus: 'APPROVED' },
-      });
-
-      // 2. Add XP & points to employee
-      const xpVal = Number(comp.challenge.xp);
-      const user = await tx.user.update({
-        where: { id: comp.employeeId },
         data: {
-          xp: { increment: xpVal },
-          pointsBalance: { increment: xpVal },
-        },
+          approvalStatus: 'APPROVED',
+          xpAwarded: challengeXp
+        }
       });
 
-      // 3. Create Notification
-      await createNotification({
-        userId: comp.employeeId,
-        type: 'CSR_APPROVED', // general success type
-        title: 'Challenge Completion Approved!',
-        message: `Your completion of "${comp.challenge.title}" was approved. +${xpVal} XP/Points.`,
-        refType: 'Challenge',
-        refId: comp.challengeId,
+      await tx.user.update({
+        where: { id: employeeId },
+        data: {
+          xp: { increment: challengeXp },
+          pointsBalance: { increment: challengeXp }
+        }
       });
 
-      return { c, user };
+      return p;
     });
 
-    // 4. Trigger Badge Award Engine
-    await BadgeAwardEngine.checkAndAwardBadges(comp.employeeId);
+    // Check and award badges side-effect
+    checkAndAwardBadges(employeeId);
 
-    // 5. Broadcast websocket events
-    emitToUser(comp.employeeId, 'user:update', updated.user);
-    emitToAll('activity:feed', {
-      type: 'CHALLENGE_COMPLETED',
-      message: `${comp.employee.name} completed the challenge: "${comp.challenge.title}"!`,
-      timestamp: new Date(),
+    // Create Notification
+    const title = 'Challenge Approved!';
+    const message = `Your submission for ${challengeTitle} has been approved!`;
+    await prisma.notification.create({
+      data: {
+        userId: employeeId,
+        type: 'CHALLENGE_APPROVED',
+        title,
+        message
+      }
     });
 
-    return res.json({ success: true, data: updated.c });
+    // Realtime events
+    emitToUser(employeeId, 'notification:new', { title, message });
+    emitToAll('leaderboard:update', {});
+    emitToAll('activity:feed', { type: 'CHALLENGE_APPROVED', employeeName, challengeTitle });
+
+    return res.json({ success: true, data: updatedParticipation });
   } catch (error: any) {
-    return res.status(500).json({ success: false, error: error.message });
+    console.error('[Gamification] Error approving participation:', error);
+    return res.status(500).json({ success: false, error: error.message || 'Failed to approve participation' });
   }
 });
 
-// Reject Challenge
-router.patch('/completions/:id/reject', requireAuth, requireRole('ADMIN', 'MANAGER'), async (req: AuthRequest, res) => {
-  const { id } = req.params;
-  const { notes } = req.body;
-
+// PATCH /challenges/participations/:id/reject - Reject challenge participation
+router.patch('/challenges/participations/:id/reject', requireAuth, requireRole('ADMIN', 'MANAGER'), async (req: AuthRequest, res: Response) => {
   try {
-    const comp = await prisma.challengePart.findUnique({
+    const { id } = req.params;
+
+    const participation = await prisma.challengePart.findUnique({
       where: { id },
-      include: { challenge: true },
+      include: {
+        challenge: true
+      }
     });
-    if (!comp) {
-      return res.status(404).json({ success: false, error: 'Challenge log not found' });
-    }
-    if (comp.approvalStatus !== 'PENDING') {
-      return res.status(400).json({ success: false, error: 'Completion already processed' });
+
+    if (!participation) {
+      return res.status(404).json({ success: false, error: 'Participation not found' });
     }
 
-    const updated = await prisma.challengePart.update({
+    if (participation.approvalStatus !== 'PENDING') {
+      return res.status(400).json({ success: false, error: 'Participation is not pending approval' });
+    }
+
+    const employeeId = participation.employeeId;
+    const challengeTitle = participation.challenge.title;
+
+    const updatedParticipation = await prisma.challengePart.update({
       where: { id },
       data: {
-        approvalStatus: 'REJECTED',
-        progress: 0, // Reset progress to allow retry
-      },
+        approvalStatus: 'REJECTED'
+      }
     });
 
     // Create Notification
-    await createNotification({
-      userId: comp.employeeId,
-      type: 'CSR_REJECTED',
-      title: 'Challenge Completion Rejected',
-      message: `Your completion proof for "${comp.challenge.title}" was rejected: ${notes || 'Evidence insufficient.'}`,
-      refType: 'Challenge',
-      refId: comp.challengeId,
+    const title = 'Challenge Submission Rejected';
+    const message = `Your submission for ${challengeTitle} was not approved.`;
+    await prisma.notification.create({
+      data: {
+        userId: employeeId,
+        type: 'CHALLENGE_REJECTED',
+        title,
+        message
+      }
     });
 
-    return res.json({ success: true, data: updated });
+    emitToUser(employeeId, 'notification:new', { title, message });
+
+    return res.json({ success: true, data: updatedParticipation });
   } catch (error: any) {
-    return res.status(500).json({ success: false, error: error.message });
+    console.error('[Gamification] Error rejecting participation:', error);
+    return res.status(500).json({ success: false, error: error.message || 'Failed to reject participation' });
   }
 });
 
-// ─────────────────────────────────────────
-// REWARDS
-// ─────────────────────────────────────────
-
-router.get('/rewards', requireAuth, async (req, res) => {
-  try {
-    const rewards = await prisma.reward.findMany({
-      orderBy: { name: 'asc' },
-    });
-    return res.json({ success: true, data: rewards });
-  } catch (error: any) {
-    return res.status(500).json({ success: false, error: error.message });
-  }
-});
-
-router.post('/rewards/redeem', requireAuth, validate(redeemRewardSchema), async (req: AuthRequest, res) => {
-  const { rewardId } = req.body;
-  const userId = req.user!.id;
-
-  try {
-    const result = await RewardRedemptionService.redeemReward(userId, rewardId);
-    return res.json({
-      success: true,
-      message: 'Redemption successful',
-      data: result,
-    });
-  } catch (error: any) {
-    return res.status(400).json({ success: false, error: error.message });
-  }
-});
-
-// ─────────────────────────────────────────
+// ─────────────────────────────────────────────────────────────────────────────
 // LEADERBOARD
-// ─────────────────────────────────────────
+// ─────────────────────────────────────────────────────────────────────────────
 
-router.get('/leaderboard', requireAuth, async (req, res) => {
+// GET /leaderboard - Return leaderboard ordered by XP
+router.get('/leaderboard', requireAuth, async (req: AuthRequest, res: Response) => {
   try {
-    const leaderboard = await prisma.user.findMany({
-      where: { status: 'ACTIVE' },
+    const users = await prisma.user.findMany({
+      orderBy: {
+        xp: 'desc'
+      },
       select: {
         id: true,
         name: true,
-        email: true,
+        departmentId: true,
         xp: true,
         pointsBalance: true,
-        department: { select: { name: true } },
-      },
-      orderBy: { xp: 'desc' },
+        _count: {
+          select: {
+            badgeAwards: true
+          }
+        }
+      }
     });
+
+    const leaderboard = users.map(u => ({
+      id: u.id,
+      name: u.name,
+      departmentId: u.departmentId,
+      xp: u.xp,
+      pointsBalance: u.pointsBalance,
+      badgeCount: u._count.badgeAwards
+    }));
+
     return res.json({ success: true, data: leaderboard });
   } catch (error: any) {
-    return res.status(500).json({ success: false, error: error.message });
+    console.error('[Gamification] Error fetching leaderboard:', error);
+    return res.status(500).json({ success: false, error: error.message || 'Failed to fetch leaderboard' });
+  }
+});
+
+// ─────────────────────────────────────────────────────────────────────────────
+// BADGES
+// ─────────────────────────────────────────────────────────────────────────────
+
+// GET /badges - List all badges, including earned status for current user
+router.get('/badges', requireAuth, async (req: AuthRequest, res: Response) => {
+  try {
+    if (!req.user) {
+      return res.status(401).json({ success: false, error: 'Unauthorized: Missing user information' });
+    }
+
+    const allBadges = await prisma.badge.findMany();
+    const earnedAwards = await prisma.badgeAward.findMany({
+      where: { employeeId: req.user.id },
+      select: { badgeId: true }
+    });
+
+    const earnedBadgeIds = new Set(earnedAwards.map(a => a.badgeId));
+
+    const badges = allBadges.map(b => ({
+      ...b,
+      earned: earnedBadgeIds.has(b.id)
+    }));
+
+    return res.json({ success: true, data: badges });
+  } catch (error: any) {
+    console.error('[Gamification] Error fetching badges:', error);
+    return res.status(500).json({ success: false, error: error.message || 'Failed to fetch badges' });
+  }
+});
+
+// ─────────────────────────────────────────────────────────────────────────────
+// REWARDS
+// ─────────────────────────────────────────────────────────────────────────────
+
+// GET /rewards - Get all active rewards
+router.get('/rewards', requireAuth, async (req: AuthRequest, res: Response) => {
+  try {
+    const rewards = await prisma.reward.findMany({
+      where: {
+        status: 'ACTIVE'
+      }
+    });
+    return res.json({ success: true, data: rewards });
+  } catch (error: any) {
+    console.error('[Gamification] Error fetching rewards:', error);
+    return res.status(500).json({ success: false, error: error.message || 'Failed to fetch rewards' });
+  }
+});
+
+// POST /rewards/:id/redeem - Redeem a reward
+router.post('/rewards/:id/redeem', requireAuth, async (req: AuthRequest, res: Response) => {
+  try {
+    const { id } = req.params;
+
+    if (!req.user) {
+      return res.status(401).json({ success: false, error: 'Unauthorized: Missing user information' });
+    }
+
+    const result = await prisma.$transaction(async (tx) => {
+      const reward = await tx.reward.findUnique({ where: { id } });
+      if (!reward || reward.status !== 'ACTIVE') {
+        throw new Error('Reward not available');
+      }
+      if (reward.stock <= 0) {
+        throw new Error('Out of stock');
+      }
+
+      const user = await tx.user.findUnique({ where: { id: req.user!.id } });
+      if (!user) {
+        throw new Error('User not found');
+      }
+      if (user.pointsBalance < reward.pointsRequired) {
+        throw new Error('Insufficient points');
+      }
+
+      // Decrement stock
+      await tx.reward.update({
+        where: { id },
+        data: { stock: { decrement: 1 } }
+      });
+
+      // Deduct points
+      const updatedUser = await tx.user.update({
+        where: { id: req.user!.id },
+        data: { pointsBalance: { decrement: reward.pointsRequired } }
+      });
+
+      // Create redemption record
+      const redemption = await tx.rewardRedemption.create({
+        data: {
+          rewardId: id,
+          employeeId: req.user!.id,
+          pointsSpent: reward.pointsRequired,
+          status: 'FULFILLED'
+        }
+      });
+
+      return {
+        redemption,
+        newBalance: updatedUser.pointsBalance,
+        rewardName: reward.name,
+        pointsRequired: reward.pointsRequired
+      };
+    });
+
+    // Create Notification
+    const title = 'Reward Redeemed!';
+    const message = `You redeemed ${result.rewardName}. ${result.pointsRequired} points deducted.`;
+    await prisma.notification.create({
+      data: {
+        userId: req.user.id,
+        type: 'REWARD_REDEEMED',
+        title,
+        message
+      }
+    });
+
+    return res.json({
+      success: true,
+      data: {
+        redemption: result.redemption,
+        newBalance: result.newBalance
+      }
+    });
+  } catch (error: any) {
+    console.error('[Gamification] Error redeeming reward:', error);
+    return res.status(400).json({ success: false, error: error.message || 'Failed to redeem reward' });
   }
 });
 

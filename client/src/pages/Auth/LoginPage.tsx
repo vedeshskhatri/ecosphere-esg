@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
-import { Leaf, Eye, EyeOff } from 'lucide-react';
+import { Eye, EyeOff } from 'lucide-react';
 import toast from 'react-hot-toast';
 import useAuthStore from '../../store/authStore';
 import api from '../../lib/api';
@@ -68,14 +68,17 @@ export const LoginPage: React.FC = () => {
         {/* Brand Logo Header */}
         <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '0.75rem', marginBottom: '2rem' }}>
           <div style={{
-            background: 'var(--env-glow)',
-            padding: '0.75rem',
+            background: '#ffffff',
+            padding: '0.5rem',
             borderRadius: '50%',
             display: 'flex',
             alignItems: 'center',
-            justifyContent: 'center'
+            justifyContent: 'center',
+            width: '64px',
+            height: '64px',
+            boxShadow: '0 4px 12px rgba(0,0,0,0.1)'
           }}>
-            <Leaf size={32} style={{ color: 'var(--env)' }} />
+            <img src="/logo.png" alt="EcoSphere Logo" style={{ width: '100%', height: '100%', objectFit: 'contain', mixBlendMode: 'multiply' }} />
           </div>
           <h2 style={{ fontSize: 'var(--text-2xl)', fontWeight: 800 }}>EcoSphere</h2>
           <p style={{ color: 'var(--text-muted)', fontSize: 'var(--text-xs)', marginTop: '-0.25rem' }}>

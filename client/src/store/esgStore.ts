@@ -2,6 +2,7 @@ import { create } from 'zustand';
 import api from '../lib/api';
 import { socket } from '../lib/socket';
 import { toast } from 'react-hot-toast';
+import { useAuthStore } from './authStore';
 
 export interface ScoreDetails {
   envScore: number;
@@ -284,6 +285,7 @@ export const useEsgStore = create<ESGState>((set, get) => {
       toast.success('Carbon transaction logged successfully!');
       get().fetchEnvironmentalData();
       get().fetchDashboardData();
+      useAuthStore.getState().fetchCurrentUser();
     },
 
     createGoal: async (goal: any) => {
@@ -291,6 +293,7 @@ export const useEsgStore = create<ESGState>((set, get) => {
       toast.success('Environmental goal created!');
       get().fetchEnvironmentalData();
       get().fetchDashboardData();
+      useAuthStore.getState().fetchCurrentUser();
     },
 
     updateGoalProgress: async (goalId: string, currentCo2: number) => {
@@ -298,6 +301,7 @@ export const useEsgStore = create<ESGState>((set, get) => {
       toast.success('Goal progress updated!');
       get().fetchEnvironmentalData();
       get().fetchDashboardData();
+      useAuthStore.getState().fetchCurrentUser();
     },
 
     createCsrActivity: async (act: any) => {
@@ -317,6 +321,7 @@ export const useEsgStore = create<ESGState>((set, get) => {
 
       toast.success('Successfully submitted participation request!');
       get().fetchSocialData();
+      useAuthStore.getState().fetchCurrentUser();
     },
 
     approveParticipation: async (partId: string) => {
@@ -324,12 +329,14 @@ export const useEsgStore = create<ESGState>((set, get) => {
       toast.success('Participation approved!');
       get().fetchSocialData();
       get().fetchDashboardData();
+      useAuthStore.getState().fetchCurrentUser();
     },
 
     rejectParticipation: async (partId: string, notes: string) => {
       await api.patch(`/social/participations/${partId}/reject`, { notes });
       toast.success('Participation rejected.');
       get().fetchSocialData();
+      useAuthStore.getState().fetchCurrentUser();
     },
 
     createPolicy: async (policy: any) => {
@@ -343,6 +350,7 @@ export const useEsgStore = create<ESGState>((set, get) => {
       toast.success('Policy acknowledged!');
       get().fetchGovernanceData();
       get().fetchDashboardData();
+      useAuthStore.getState().fetchCurrentUser();
     },
 
     createAudit: async (audit: any) => {
@@ -388,6 +396,7 @@ export const useEsgStore = create<ESGState>((set, get) => {
       await api.post(`/gamification/challenges/${challengeId}/join`);
       toast.success('Joined challenge! Go green!');
       get().fetchGamificationData();
+      useAuthStore.getState().fetchCurrentUser();
     },
 
     updateChallengeProgress: async (challengeId: string, progress: number, proofFile: File | null, notes?: string) => {
@@ -402,6 +411,7 @@ export const useEsgStore = create<ESGState>((set, get) => {
 
       toast.success('Progress updated successfully!');
       get().fetchGamificationData();
+      useAuthStore.getState().fetchCurrentUser();
     },
 
     approveChallengeCompletion: async (compId: string) => {
@@ -409,18 +419,21 @@ export const useEsgStore = create<ESGState>((set, get) => {
       toast.success('Challenge completion approved!');
       get().fetchGamificationData();
       get().fetchDashboardData();
+      useAuthStore.getState().fetchCurrentUser();
     },
 
     rejectChallengeCompletion: async (compId: string, notes: string) => {
       await api.patch(`/gamification/completions/${compId}/reject`, { notes });
       toast.success('Challenge completion rejected.');
       get().fetchGamificationData();
+      useAuthStore.getState().fetchCurrentUser();
     },
 
     redeemReward: async (rewardId: string) => {
       const response = await api.post('/gamification/rewards/redeem', { rewardId });
       toast.success('Reward successfully redeemed!');
       get().fetchGamificationData();
+      useAuthStore.getState().fetchCurrentUser();
       return response.data.data;
     },
 
@@ -429,6 +442,7 @@ export const useEsgStore = create<ESGState>((set, get) => {
       toast.success('ESG Settings updated!');
       get().fetchSettingsData();
       get().fetchDashboardData();
+      useAuthStore.getState().fetchCurrentUser();
     },
   };
 });

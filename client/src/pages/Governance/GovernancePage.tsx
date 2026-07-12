@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import { useLocation, useNavigate } from 'react-router-dom';
 import { useAuthStore } from '../../store/authStore';
 import { useEsgStore } from '../../store/esgStore';
 import api from '../../lib/api';
@@ -13,12 +14,35 @@ export const GovernancePage: React.FC = () => {
     createPolicy, createAudit, createComplianceIssue, updateComplianceIssueStatus 
   } = useEsgStore();
 
+  const location = useLocation();
+  const navigate = useNavigate();
+
   useEffect(() => {
     fetchGovernanceData();
   }, [fetchGovernanceData]);
 
   // Tabs: Policies / Audits / Compliance
-  const [activeSubTab, setActiveSubTab] = useState<'policies' | 'audits' | 'compliance'>('policies');
+  type SubTabType = 'policies' | 'audits' | 'compliance';
+  
+  const getTabFromPath = (): SubTabType => {
+    const path = location.pathname;
+    if (path.includes('/audits')) return 'audits';
+    if (path.includes('/issues') || path.includes('/compliance')) return 'compliance';
+    return 'policies';
+  };
+
+  const [activeSubTab, setActiveSubTab] = useState<SubTabType>(getTabFromPath());
+
+  useEffect(() => {
+    setActiveSubTab(getTabFromPath());
+  }, [location.pathname]);
+
+  const handleTabChange = (tab: SubTabType) => {
+    setActiveSubTab(tab);
+    if (tab === 'policies') navigate('/governance/policies');
+    else if (tab === 'audits') navigate('/governance/audits');
+    else if (tab === 'compliance') navigate('/governance/issues');
+  };
   
   // Policy Sub-tabs (Draft / Active / Archived)
   const [policyFilter, setPolicyFilter] = useState<'ACTIVE' | 'DRAFT' | 'ARCHIVED'>('ACTIVE');
@@ -131,25 +155,67 @@ export const GovernancePage: React.FC = () => {
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '2rem' }}>
       {/* Title */}
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '1rem' }}>
         <div>
-          <h1 style={{ fontSize: 'var(--text-4xl)', fontWeight: '800', letterSpacing: '-0.02em', marginBottom: '0.25rem' }}>
+          <h1 style={{ fontSize: 'var(--text-2xl)', fontWeight: '700', letterSpacing: '-0.025em', margin: 0, color: '#19350C' }}>
             Corporate Governance
           </h1>
-          <span style={{ fontSize: 'var(--text-sm)', color: 'var(--text-muted)' }}>
+          <span style={{ fontSize: 'var(--text-sm)', color: '#687D31', marginTop: '2px', display: 'inline-block' }}>
             Corporate policy compliance check-ins, scheduled audit calendars, and high-severity SLA trackers.
           </span>
         </div>
         
         {/* Module Sub-tabs */}
-        <div style={{ display: 'flex', gap: '0.5rem', background: 'var(--bg-card)', padding: '4px', borderRadius: '8px', border: '1px solid var(--border)' }}>
-          <button onClick={() => setActiveSubTab('policies')} className="btn" style={{ padding: '0.4rem 0.875rem', border: 'none', backgroundColor: activeSubTab === 'policies' ? 'var(--bg-input)' : 'transparent', color: activeSubTab === 'policies' ? 'var(--gov)' : 'var(--text-secondary)' }}>
+        <div style={{ display: 'flex', gap: '0.25rem', background: '#EEECEA', padding: '3px', borderRadius: '9px', border: '1px solid rgba(25,53,12,0.12)' }}>
+          <button
+            onClick={() => handleTabChange('policies')}
+            className="btn"
+            style={{
+              padding: '0.35rem 0.875rem',
+              border: 'none',
+              borderRadius: '7px',
+              backgroundColor: activeSubTab === 'policies' ? '#ffffff' : 'transparent',
+              color: activeSubTab === 'policies' ? '#19350C' : '#3D4A28',
+              fontWeight: activeSubTab === 'policies' ? 600 : 500,
+              fontSize: 'var(--text-sm)',
+              cursor: 'pointer',
+              transition: 'all 0.15s ease'
+            }}
+          >
             Policies
           </button>
-          <button onClick={() => setActiveSubTab('audits')} className="btn" style={{ padding: '0.4rem 0.875rem', border: 'none', backgroundColor: activeSubTab === 'audits' ? 'var(--bg-input)' : 'transparent', color: activeSubTab === 'audits' ? 'var(--gov)' : 'var(--text-secondary)' }}>
+          <button
+            onClick={() => handleTabChange('audits')}
+            className="btn"
+            style={{
+              padding: '0.35rem 0.875rem',
+              border: 'none',
+              borderRadius: '7px',
+              backgroundColor: activeSubTab === 'audits' ? '#ffffff' : 'transparent',
+              color: activeSubTab === 'audits' ? '#19350C' : '#3D4A28',
+              fontWeight: activeSubTab === 'audits' ? 600 : 500,
+              fontSize: 'var(--text-sm)',
+              cursor: 'pointer',
+              transition: 'all 0.15s ease'
+            }}
+          >
             Audits
           </button>
-          <button onClick={() => setActiveSubTab('compliance')} className="btn" style={{ padding: '0.4rem 0.875rem', border: 'none', backgroundColor: activeSubTab === 'compliance' ? 'var(--bg-input)' : 'transparent', color: activeSubTab === 'compliance' ? 'var(--gov)' : 'var(--text-secondary)' }}>
+          <button
+            onClick={() => handleTabChange('compliance')}
+            className="btn"
+            style={{
+              padding: '0.35rem 0.875rem',
+              border: 'none',
+              borderRadius: '7px',
+              backgroundColor: activeSubTab === 'compliance' ? '#ffffff' : 'transparent',
+              color: activeSubTab === 'compliance' ? '#19350C' : '#3D4A28',
+              fontWeight: activeSubTab === 'compliance' ? 600 : 500,
+              fontSize: 'var(--text-sm)',
+              cursor: 'pointer',
+              transition: 'all 0.15s ease'
+            }}
+          >
             Compliance
           </button>
         </div>
