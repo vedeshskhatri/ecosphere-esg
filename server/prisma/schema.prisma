@@ -303,6 +303,8 @@ model CarbonTransaction {
   notes            String?
   createdById      String?
   createdBy        User?          @relation("CarbonCreatedBy", fields: [createdById], references: [id])
+  productId        String?
+  product          Product?       @relation(fields: [productId], references: [id])
   createdAt        DateTime       @default(now())
 }
 
@@ -474,4 +476,17 @@ model Nudge {
   message      String
   isDismissed  Boolean    @default(false)
   createdAt    DateTime   @default(now())
+}
+
+model Product {
+  id                 String              @id @default(uuid())
+  name               String
+  sku                String              @unique
+  carbonFootprintCo2 Decimal             @db.Decimal(10, 4) // CO2 per unit (kg)
+  recyclable         Boolean             @default(true)
+  materialsUsed      String?
+  status             UserStatus          @default(ACTIVE)
+  createdAt          DateTime            @default(now())
+  updatedAt          DateTime            @updatedAt
+  carbonTransactions CarbonTransaction[]
 }
