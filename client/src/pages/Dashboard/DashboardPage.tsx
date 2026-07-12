@@ -355,25 +355,26 @@ export const DashboardPage: React.FC = () => {
           marginBottom: '1rem'
         }}
       >
-        <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
           <div style={{
-            width: '44px',
-            height: '44px',
+            width: '76px',
+            height: '76px',
             borderRadius: '50%',
             background: '#ffffff',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
-            padding: '5px',
+            padding: '2px',
             boxShadow: '0 2px 8px rgba(25,53,12,0.06)',
-            border: '1px solid rgba(25,53,12,0.08)'
+            border: '1px solid rgba(25,53,12,0.08)',
+            overflow: 'hidden'
           }}>
-            <img src="/logo.png" alt="EcoSphere Logo" style={{ width: '100%', height: '100%', objectFit: 'contain', mixBlendMode: 'multiply' }} />
+            <img src="/logo.png" alt="EcoSphere Logo" style={{ width: '100%', height: '100%', objectFit: 'contain', mixBlendMode: 'multiply', borderRadius: '50%' }} />
           </div>
           <div>
             <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
               <h1 style={{ fontSize: '1.875rem', fontWeight: 800, color: 'var(--text-primary)', margin: 0 }}>
-                Platform Overview
+                Eco Sphere
               </h1>
               <span
                 className={`dot ${isConnected ? 'dot-green' : 'dot-red'}`}
