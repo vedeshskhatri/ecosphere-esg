@@ -87,7 +87,7 @@ export const EnvironmentalPage: React.FC = () => {
     }));
   }, [transactions]);
 
-  const COLORS = ['#22c55e', '#3b82f6', '#a855f7'];
+  const COLORS = ['#687D31', '#3d6c8a', '#7d688a'];
 
   // Handle forms
   const handleLogSubmit = async (e: React.FormEvent) => {
