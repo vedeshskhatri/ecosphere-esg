@@ -355,27 +355,43 @@ export const DashboardPage: React.FC = () => {
           marginBottom: '1rem'
         }}
       >
-        <div>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-            <h1 style={{ fontSize: '1.875rem', fontWeight: 800, color: 'var(--text-primary)', margin: 0 }}>
-              Platform Overview
-            </h1>
-            <span
-              className={`dot ${isConnected ? 'dot-green' : 'dot-red'}`}
-              style={{
-                display: 'inline-block',
-                width: '8px',
-                height: '8px',
-                borderRadius: '50%',
-                background: isConnected ? '#22c55e' : '#ef4444',
-                boxShadow: isConnected ? '0 0 8px #22c55e' : '0 0 8px #ef4444',
-                marginTop: '4px',
-              }}
-            />
+        <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+          <div style={{
+            width: '44px',
+            height: '44px',
+            borderRadius: '50%',
+            background: '#ffffff',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            padding: '5px',
+            boxShadow: '0 2px 8px rgba(25,53,12,0.06)',
+            border: '1px solid rgba(25,53,12,0.08)'
+          }}>
+            <img src="/logo.png" alt="EcoSphere Logo" style={{ width: '100%', height: '100%', objectFit: 'contain', mixBlendMode: 'multiply' }} />
           </div>
-          <p style={{ fontSize: 'var(--text-sm)', color: 'var(--text-secondary)', margin: '0.25rem 0 0 0' }}>
-            Real-time ESG intelligence and gamified compliance tracking.
-          </p>
+          <div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+              <h1 style={{ fontSize: '1.875rem', fontWeight: 800, color: 'var(--text-primary)', margin: 0 }}>
+                Platform Overview
+              </h1>
+              <span
+                className={`dot ${isConnected ? 'dot-green' : 'dot-red'}`}
+                style={{
+                  display: 'inline-block',
+                  width: '8px',
+                  height: '8px',
+                  borderRadius: '50%',
+                  background: isConnected ? '#22c55e' : '#ef4444',
+                  boxShadow: isConnected ? '0 0 8px #22c55e' : '0 0 8px #ef4444',
+                  marginTop: '4px',
+                }}
+              />
+            </div>
+            <p style={{ fontSize: 'var(--text-sm)', color: 'var(--text-secondary)', margin: '0.25rem 0 0 0' }}>
+              Real-time ESG intelligence and gamified compliance tracking.
+            </p>
+          </div>
         </div>
       </motion.div>
 
