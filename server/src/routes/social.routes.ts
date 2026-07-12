@@ -199,8 +199,9 @@ router.post('/:id/join', requireAuth, upload.single('proof'), async (req: AuthRe
     // Check ESG Settings
     const esgSettings = await prisma.esgSettings.findFirst();
     const settingsEvidenceRequired = esgSettings ? esgSettings.evidenceRequired : true;
+    const isEvidenceRequired = activity.evidenceRequired || settingsEvidenceRequired;
 
-    if (settingsEvidenceRequired && !req.file) {
+    if (isEvidenceRequired && !req.file) {
       return res.status(400).json({ success: false, error: 'Proof file required' });
     }
 
