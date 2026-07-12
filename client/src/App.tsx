@@ -8,10 +8,10 @@ import useNotificationStore from './store/notificationStore';
 import { socket } from './lib/socket';
 import api from './lib/api';
 
-// Components
 import Sidebar from './components/Sidebar';
 import NotificationBell from './components/NotificationBell';
 import { SectionContextBar } from './components/SectionContextBar';
+import XPCelebrationOverlay from './components/XPCelebrationOverlay';
 
 // Pages
 import LoginPage from './pages/Auth/LoginPage';
@@ -146,6 +146,10 @@ const ProtectedRoute: React.FC<{ children: React.ReactNode }> = ({ children }) =
 const AuthenticatedLayout: React.FC = () => {
   const [notificationsOpen, setNotificationsOpen] = useState(false);
   const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
+  const [xpCelebration, setXpCelebration] = useState<{ visible: boolean; xp: number; activityTitle?: string }>({
+    visible: false,
+    xp: 0,
+  });
 
   const user = useAuthStore((state) => state.user);
   const fetchCurrentUser = useAuthStore((state) => state.fetchCurrentUser);
@@ -169,6 +173,7 @@ const AuthenticatedLayout: React.FC = () => {
     if (!user) return;
 
     socket.connect();
+    socket.emit('join:user', user.id);
     fetchCurrentUser();
 
     const fetchNotifications = async () => {
@@ -185,6 +190,18 @@ const AuthenticatedLayout: React.FC = () => {
       console.log('[Socket] New notification received:', notification);
       addNotification(notification);
       fetchCurrentUser();
+
+      // Trigger XP celebration for approval events
+      if (
+        (notification.type === 'CSR_APPROVED' || notification.type === 'CHALLENGE_APPROVED') &&
+        notification.xpAwarded
+      ) {
+        setXpCelebration({
+          visible: true,
+          xp: notification.xpAwarded,
+          activityTitle: notification.activityTitle,
+        });
+      }
     });
 
     socket.on('badge:awarded', (data) => {
@@ -241,6 +258,14 @@ const AuthenticatedLayout: React.FC = () => {
       <NotificationBell
         isOpen={notificationsOpen}
         onClose={() => setNotificationsOpen(false)}
+      />
+
+      {/* XP Celebration Overlay */}
+      <XPCelebrationOverlay
+        isVisible={xpCelebration.visible}
+        xpAmount={xpCelebration.xp}
+        activityTitle={xpCelebration.activityTitle}
+        onClose={() => setXpCelebration((s) => ({ ...s, visible: false }))}
       />
     </div>
   );

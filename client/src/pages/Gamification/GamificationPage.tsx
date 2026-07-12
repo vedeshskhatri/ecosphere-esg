@@ -824,8 +824,8 @@ export const GamificationPage: React.FC = () => {
                       {/* Actions Division */}
                       <div style={{ marginTop: '0.5rem', display: 'flex', flexDirection: 'column', gap: '0.5rem', borderTop: '1px solid rgba(25, 53, 12, 0.08)', paddingTop: '0.75rem' }}>
                         
-                        {/* Employee Join Actions */}
-                        {user?.role === 'EMPLOYEE' && (
+                        {/* Join / Participation Actions */}
+                        {user && (
                           <>
                             {ch.status === 'ACTIVE' && ch.joinStatus === null && (
                               <button
@@ -902,7 +902,7 @@ export const GamificationPage: React.FC = () => {
                                 Send for Review
                               </button>
                             )}
-                            {ch.status === 'UNDER_REVIEW' && (
+                            {(ch.status === 'ACTIVE' || ch.status === 'UNDER_REVIEW') && (
                               <button
                                 onClick={() => handleTransitionStatus(ch.id, 'COMPLETED')}
                                 className="btn-secondary-gamify"
@@ -1221,7 +1221,7 @@ export const GamificationPage: React.FC = () => {
                       </div>
 
                       {/* Redeem Action button */}
-                      {user?.role === 'EMPLOYEE' && (
+                      {user && (
                         <button
                           onClick={() => setShowRedeemConfirm(reward)}
                           className="btn-gamify"
@@ -1548,19 +1548,19 @@ export const GamificationPage: React.FC = () => {
           left: 0,
           right: 0,
           bottom: 0,
-          background: 'rgba(0, 0, 0, 0.75)',
-          backdropFilter: 'blur(6px)',
+          background: 'rgba(0, 0, 0, 0.65)',
+          backdropFilter: 'blur(4px)',
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
           zIndex: 1000
         }}>
-          <div className="glass-card" style={{ width: '100%', maxWidth: '460px', padding: '1.5rem', display: 'flex', flexDirection: 'column', gap: '1.25rem', margin: '1rem' }}>
+          <div className="glass-card" style={{ width: '100%', maxWidth: '460px', padding: '1.5rem', display: 'flex', flexDirection: 'column', gap: '1.25rem', margin: '1rem', backgroundColor: '#ffffff', border: '1px solid rgba(25, 53, 12, 0.12)', boxShadow: '0 10px 30px rgba(25, 53, 12, 0.1)' }}>
             <div>
-              <h2 style={{ fontSize: '1.25rem', fontWeight: 800, color: '#f1f5f9', margin: 0 }}>
+              <h2 style={{ fontSize: '1.25rem', fontWeight: 800, color: '#19350C', margin: 0 }}>
                 Join Challenge
               </h2>
-              <p style={{ fontSize: '0.8rem', color: '#94a3b8', margin: '4px 0 0 0' }}>
+              <p style={{ fontSize: '0.8rem', color: '#3D4A28', margin: '4px 0 0 0', fontWeight: 500 }}>
                 Confirm your participation in <strong>{showJoinModal.title}</strong>
               </p>
             </div>
@@ -1570,7 +1570,7 @@ export const GamificationPage: React.FC = () => {
               {/* Evidence File Upload Area */}
               {showJoinModal.evidenceRequired ? (
                 <div>
-                  <label style={{ display: 'block', color: '#f1f5f9', fontSize: '0.85rem', fontWeight: 600, marginBottom: '0.5rem' }}>
+                  <label style={{ display: 'block', color: '#19350C', fontSize: '0.85rem', fontWeight: 600, marginBottom: '0.5rem' }}>
                     Upload proof of completion *
                   </label>
                   <div
@@ -1584,22 +1584,22 @@ export const GamificationPage: React.FC = () => {
                       }
                     }}
                     style={{
-                      border: `2px dashed ${dragOver ? '#f97316' : 'rgba(255, 255, 255, 0.15)'}`,
+                      border: dragOver ? '2px dashed #687D31' : '2px dashed rgba(25, 53, 12, 0.2)',
                       borderRadius: '12px',
                       padding: '2.5rem 1.5rem',
                       textAlign: 'center',
-                      background: dragOver ? 'rgba(249, 115, 22, 0.05)' : 'rgba(0, 0, 0, 0.25)',
+                      background: dragOver ? 'rgba(104, 125, 49, 0.08)' : 'rgba(25, 53, 12, 0.02)',
                       cursor: 'pointer',
                       transition: 'all 0.2s',
                       position: 'relative'
                     }}
                     onClick={() => document.getElementById('join-proof-input')?.click()}
                   >
-                    <Upload size={28} style={{ color: dragOver ? '#f97316' : '#94a3b8', marginBottom: '0.75rem', marginLeft: 'auto', marginRight: 'auto' }} />
-                    <p style={{ margin: 0, fontSize: '0.875rem', fontWeight: 600, color: '#f1f5f9' }}>
+                    <Upload size={28} style={{ color: '#687D31', marginBottom: '0.75rem', marginLeft: 'auto', marginRight: 'auto' }} />
+                    <p style={{ margin: 0, fontSize: '0.875rem', fontWeight: 600, color: '#19350C' }}>
                       {proofFile ? proofFile.name : 'Select or drop proof document'}
                     </p>
-                    <p style={{ margin: '4px 0 0 0', fontSize: '0.75rem', color: '#94a3b8' }}>
+                    <p style={{ margin: '4px 0 0 0', fontSize: '0.75rem', color: '#3D4A28', fontWeight: 500 }}>
                       Supports PNG, JPG, JPEG, and PDF
                     </p>
                     <input
@@ -1613,12 +1613,12 @@ export const GamificationPage: React.FC = () => {
                 </div>
               ) : (
                 <div style={{
-                  background: 'rgba(249, 115, 22, 0.05)',
-                  border: '1px solid rgba(249, 115, 22, 0.15)',
+                  background: 'rgba(104, 125, 49, 0.08)',
+                  border: '1px solid rgba(104, 125, 49, 0.15)',
                   borderRadius: '8px',
                   padding: '1rem',
                   fontSize: '0.85rem',
-                  color: '#f97316',
+                  color: '#687D31',
                   lineHeight: '1.4'
                 }}>
                   No evidence upload required for this challenge. Click "Join Drive" below to complete and automatically claim reward!
@@ -1633,16 +1633,33 @@ export const GamificationPage: React.FC = () => {
                     setShowJoinModal(null);
                     setProofFile(null);
                   }}
-                  className="btn-secondary-gamify"
-                  style={{ padding: '0.5rem 1rem' }}
+                  style={{
+                    background: 'rgba(25, 53, 12, 0.05)',
+                    border: '1px solid rgba(25, 53, 12, 0.1)',
+                    borderRadius: '8px',
+                    color: '#687D31',
+                    padding: '0.5rem 1rem',
+                    fontWeight: 600,
+                    cursor: 'pointer',
+                    fontSize: '0.875rem'
+                  }}
                   disabled={submittingJoin}
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
-                  className="btn-gamify"
-                  style={{ padding: '0.5rem 1rem' }}
+                  style={{
+                    background: '#687D31',
+                    border: 'none',
+                    borderRadius: '8px',
+                    color: '#fff',
+                    padding: '0.5rem 1rem',
+                    fontWeight: 600,
+                    cursor: 'pointer',
+                    fontSize: '0.875rem',
+                    boxShadow: '0 4px 12px rgba(104, 125, 49, 0.2)'
+                  }}
                   disabled={submittingJoin}
                 >
                   {submittingJoin ? 'Submitting...' : 'Join Drive'}
@@ -1661,14 +1678,14 @@ export const GamificationPage: React.FC = () => {
           left: 0,
           right: 0,
           bottom: 0,
-          background: 'rgba(0, 0, 0, 0.75)',
-          backdropFilter: 'blur(6px)',
+          background: 'rgba(0, 0, 0, 0.65)',
+          backdropFilter: 'blur(4px)',
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
           zIndex: 1000
         }}>
-          <div className="glass-card" style={{ width: '100%', maxWidth: '400px', padding: '1.5rem', display: 'flex', flexDirection: 'column', gap: '1.25rem', margin: '1rem', textAlign: 'center' }}>
+          <div className="glass-card" style={{ width: '100%', maxWidth: '400px', padding: '1.5rem', display: 'flex', flexDirection: 'column', gap: '1.25rem', margin: '1rem', textAlign: 'center', backgroundColor: '#ffffff', border: '1px solid rgba(25, 53, 12, 0.12)', boxShadow: '0 10px 30px rgba(25, 53, 12, 0.1)' }}>
             <div>
               <div style={{
                 background: 'rgba(245, 158, 11, 0.12)',
@@ -1683,10 +1700,10 @@ export const GamificationPage: React.FC = () => {
               }}>
                 <Gift size={22} />
               </div>
-              <h2 style={{ fontSize: '1.25rem', fontWeight: 800, color: '#f1f5f9', margin: 0 }}>
+              <h2 style={{ fontSize: '1.25rem', fontWeight: 800, color: '#19350C', margin: 0 }}>
                 Confirm Redemption
               </h2>
-              <p style={{ fontSize: '0.85rem', color: '#94a3b8', margin: '6px 0 0 0', lineHeight: '1.4' }}>
+              <p style={{ fontSize: '0.85rem', color: '#3D4A28', margin: '6px 0 0 0', lineHeight: '1.4', fontWeight: 500 }}>
                 Confirm redemption of <strong>{showRedeemConfirm.name}</strong> for <strong>{showRedeemConfirm.pointsRequired} points</strong>?
               </p>
             </div>
@@ -1696,16 +1713,33 @@ export const GamificationPage: React.FC = () => {
               <button
                 type="button"
                 onClick={() => setShowRedeemConfirm(null)}
-                className="btn-secondary-gamify"
-                style={{ padding: '0.5rem 1.25rem' }}
+                style={{
+                  background: 'rgba(25, 53, 12, 0.05)',
+                  border: '1px solid rgba(25, 53, 12, 0.1)',
+                  borderRadius: '8px',
+                  color: '#687D31',
+                  padding: '0.5rem 1.25rem',
+                  fontWeight: 600,
+                  cursor: 'pointer',
+                  fontSize: '0.875rem'
+                }}
               >
                 No, Cancel
               </button>
               <button
                 type="button"
                 onClick={handleRedeemConfirmSubmit}
-                className="btn-gamify"
-                style={{ padding: '0.5rem 1.25rem' }}
+                style={{
+                  background: '#687D31',
+                  border: 'none',
+                  borderRadius: '8px',
+                  color: '#fff',
+                  padding: '0.5rem 1.25rem',
+                  fontWeight: 600,
+                  cursor: 'pointer',
+                  fontSize: '0.875rem',
+                  boxShadow: '0 4px 12px rgba(104, 125, 49, 0.2)'
+                }}
               >
                 Yes, Redeem
               </button>
