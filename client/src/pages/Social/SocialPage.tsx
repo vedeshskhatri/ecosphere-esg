@@ -1,345 +1,986 @@
-import React, { useEffect, useState } from 'react';
-import { useAuthStore } from '../../store/authStore';
-import { useEsgStore } from '../../store/esgStore';
+import React, { useEffect, useState, useCallback } from 'react';
 import api from '../../lib/api';
-import { Users, Award, FileText, Check, X, ShieldAlert, Plus, Calendar } from 'lucide-react';
+import { useAuthStore } from '../../store/authStore';
+import {
+  Users, Plus, CheckCircle, XCircle, Clock, Upload, Award, FileText
+} from 'lucide-react';
 import toast from 'react-hot-toast';
 
 export const SocialPage: React.FC = () => {
   const { user } = useAuthStore();
-  const { 
-    activities, categories, pendingParticipations,
-    fetchSocialData, joinActivity, approveParticipation, rejectParticipation
-  } = useEsgStore();
+  const isAdminOrManager = user?.role === 'ADMIN' || user?.role === 'MANAGER';
 
-  useEffect(() => {
-    fetchSocialData(user?.role);
-  }, [fetchSocialData, user?.role]);
+  // Component States
+  const [activities, setActivities] = useState<any[]>([]);
+  const [participations, setParticipations] = useState<any[]>([]);
+  const [categories, setCategories] = useState<any[]>([]);
+  const [activeTab, setActiveTab] = useState<'activities' | 'approvals' | 'diversity'>('activities');
+  const [loading, setLoading] = useState<boolean>(true);
 
-  // Form toggles
-  const [showCreateForm, setShowCreateForm] = useState(false);
-  const [joiningActivityId, setJoiningActivityId] = useState<string | null>(null);
+  // Modals Toggle States
+  const [showNewActivityModal, setShowNewActivityModal] = useState<boolean>(false);
+  const [showJoinModal, setShowJoinModal] = useState<{ open: boolean; activity: any }>({
+    open: false,
+    activity: null
+  });
 
-  // Creation State
-  const [title, setTitle] = useState('');
-  const [catId, setCatId] = useState('');
-  const [description, setDescription] = useState('');
-  const [evidenceRequired, setEvidenceRequired] = useState(false);
-  const [maxParticipants, setMaxParticipants] = useState('');
-  const [xpReward, setXpReward] = useState('50');
-  const [deadline, setDeadline] = useState('');
+  // Form Fields - New Activity
+  const [newTitle, setNewTitle] = useState<string>('');
+  const [newCategoryId, setNewCategoryId] = useState<string>('');
+  const [newDescription, setNewDescription] = useState<string>('');
+  const [newXpReward, setNewXpReward] = useState<number>(50);
+  const [newDeadline, setNewDeadline] = useState<string>('');
+  const [evidenceRequired, setEvidenceRequired] = useState<boolean>(false);
+  const [newMaxParticipants, setNewMaxParticipants] = useState<string>('');
 
-  // Joining states
+  // Form Fields - Join Activity
   const [proofFile, setProofFile] = useState<File | null>(null);
-  const [notes, setNotes] = useState('');
+  const [dragOver, setDragOver] = useState<boolean>(false);
 
-  // Rejection Notes modal state
-  const [rejectingPartId, setRejectingPartId] = useState<string | null>(null);
-  const [rejectionNotes, setRejectionNotes] = useState('');
+  // Fetch CSR Activities
+  const fetchActivities = useCallback(async () => {
+    try {
+      const res = await api.get('/social');
+      if (res.data && res.data.success) {
+        setActivities(res.data.data);
+      }
+    } catch (error: any) {
+      console.error('[SocialPage] Error fetching activities:', error);
+      toast.error('Failed to load CSR activities.');
+    }
+  }, []);
 
-  const handleCreateSubmit = async (e: React.FormEvent) => {
+  // Fetch Pending Participations (Approvals Queue)
+  const fetchParticipations = useCallback(async () => {
+    if (!isAdminOrManager) return;
+    try {
+      const res = await api.get('/social/participations');
+      if (res.data && res.data.success) {
+        setParticipations(res.data.data);
+      }
+    } catch (error: any) {
+      console.error('[SocialPage] Error fetching participations:', error);
+      toast.error('Failed to load pending approvals.');
+    }
+  }, [isAdminOrManager]);
+
+  // Fetch Categories for new activity dropdown
+  const fetchCategories = useCallback(async () => {
+    try {
+      const res = await api.get('/settings/categories');
+      if (res.data && res.data.success) {
+        const csrCategories = res.data.data.filter((c: any) => c.type === 'CSR_ACTIVITY');
+        setCategories(csrCategories);
+      }
+    } catch (error: any) {
+      console.error('[SocialPage] Error fetching categories:', error);
+    }
+  }, []);
+
+  // Initialize data on mount
+  useEffect(() => {
+    const initData = async () => {
+      setLoading(true);
+      await Promise.all([fetchActivities(), fetchParticipations(), fetchCategories()]);
+      setLoading(false);
+    };
+    initData();
+  }, [fetchActivities, fetchParticipations, fetchCategories]);
+
+  // Handle New Activity Submit
+  const handleCreateActivity = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!title || !catId || !description || !xpReward) {
-      toast.error('All fields marked * are required.');
+    if (!newTitle || !newCategoryId || !newDescription) {
+      toast.error('Please fill in all required fields.');
       return;
     }
 
     try {
-      await api.post('/social/activities', {
-        title,
-        categoryId: catId,
-        description,
+      const payload = {
+        title: newTitle,
+        categoryId: newCategoryId,
+        description: newDescription,
+        xpReward: newXpReward,
         evidenceRequired,
-        maxParticipants: maxParticipants ? parseInt(maxParticipants) : null,
-        xpReward: parseInt(xpReward),
-        deadline: deadline || null,
-      });
-      toast.success('CSR Activity created successfully!');
-      setShowCreateForm(false);
-      setTitle('');
-      setCatId('');
-      setDescription('');
-      setEvidenceRequired(false);
-      setMaxParticipants('');
-      setXpReward('50');
-      setDeadline('');
-      fetchSocialData(user?.role);
-    } catch (err) {
-      // Axios error interceptor handles toasts
+        deadline: newDeadline || null,
+        maxParticipants: newMaxParticipants ? parseInt(newMaxParticipants) : null
+      };
+
+      const res = await api.post('/social', payload);
+      if (res.data && res.data.success) {
+        toast.success('Activity created.');
+        setShowNewActivityModal(false);
+        // Reset fields
+        setNewTitle('');
+        setNewCategoryId('');
+        setNewDescription('');
+        setNewXpReward(50);
+        setNewDeadline('');
+        setEvidenceRequired(false);
+        setNewMaxParticipants('');
+        // Refresh
+        fetchActivities();
+      }
+    } catch (error: any) {
+      const msg = error.response?.data?.error || 'Failed to create activity.';
+      toast.error(msg);
     }
   };
 
-  const handleJoinSubmit = async (e: React.FormEvent) => {
+  // Handle Join Submit
+  const handleJoinActivity = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!joiningActivityId) return;
+    const activity = showJoinModal.activity;
+    if (!activity) return;
 
-    const activity = activities.find((a) => a.id === joiningActivityId);
-    if (activity?.evidenceRequired && !proofFile) {
-      toast.error('Evidence file is required to join this activity!');
+    if (activity.evidenceRequired && !proofFile) {
+      toast.error('Proof file required');
       return;
     }
 
-    await joinActivity(joiningActivityId, proofFile, notes);
-    setJoiningActivityId(null);
-    setProofFile(null);
-    setNotes('');
+    try {
+      const formData = new FormData();
+      if (proofFile) {
+        formData.append('proof', proofFile);
+      }
+
+      const res = await api.post(`/social/${activity.id}/join`, formData, {
+        headers: {
+          'Content-Type': 'multipart/form-data'
+        }
+      });
+
+      if (res.data && res.data.success) {
+        toast.success('Joined! Pending approval.');
+        setShowJoinModal({ open: false, activity: null });
+        setProofFile(null);
+        fetchActivities();
+      }
+    } catch (error: any) {
+      const msg = error.response?.data?.error || 'Failed to join activity.';
+      toast.error(msg);
+    }
   };
 
-  const triggerReject = async (partId: string) => {
-    if (!rejectionNotes.trim()) {
-      toast.error('Please enter a reason for rejection.');
-      return;
+  // Handle Action Approval
+  const handleApprove = async (id: string) => {
+    try {
+      const res = await api.patch(`/social/participations/${id}/approve`);
+      if (res.data && res.data.success) {
+        toast.success('Participation approved.');
+        fetchParticipations();
+        fetchActivities();
+      }
+    } catch (error: any) {
+      toast.error(error.response?.data?.error || 'Failed to approve participation.');
     }
-    await rejectParticipation(partId, rejectionNotes);
-    setRejectingPartId(null);
-    setRejectionNotes('');
+  };
+
+  // Handle Action Rejection
+  const handleReject = async (id: string) => {
+    try {
+      const res = await api.patch(`/social/participations/${id}/reject`);
+      if (res.data && res.data.success) {
+        toast.success('Participation rejected.');
+        fetchParticipations();
+        fetchActivities();
+      }
+    } catch (error: any) {
+      toast.error(error.response?.data?.error || 'Failed to reject participation.');
+    }
+  };
+
+  // Resolve dynamic proof URL paths
+  const getProofDownloadUrl = (filename: string) => {
+    const backendBase = api.defaults.baseURL?.replace('/api', '') || 'http://localhost:5000';
+    return `${backendBase}/uploads/${filename}`;
   };
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: '2rem' }}>
-      {/* Page Header */}
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-        <div>
-          <h1 style={{ fontSize: 'var(--text-4xl)', fontWeight: '800', letterSpacing: '-0.02em', marginBottom: '0.25rem' }}>
-            Social Responsibility
-          </h1>
-          <span style={{ fontSize: 'var(--text-sm)', color: 'var(--text-muted)' }}>
-            Join volunteer drives, log ESG hours, and earn recognition rewards.
-          </span>
-        </div>
-        {user?.role !== 'EMPLOYEE' && (
-          <button onClick={() => setShowCreateForm(!showCreateForm)} className="btn btn-primary">
-            <Plus size={16} /> Create Activity
+    <div className="social-container" style={{ fontFamily: "'Inter', sans-serif" }}>
+      {/* Custom Styles */}
+      <style>{`
+        .glass-card {
+          background: rgba(22, 26, 35, 0.85);
+          backdrop-filter: blur(12px);
+          border: 1px solid rgba(255, 255, 255, 0.08);
+          border-radius: 16px;
+          transition: transform 0.25s ease, box-shadow 0.25s ease;
+        }
+        .glass-card:hover {
+          transform: translateY(-2px);
+          box-shadow: 0 12px 30px rgba(0, 0, 0, 0.4);
+        }
+        .text-truncate-2 {
+          display: -webkit-box;
+          -webkit-line-clamp: 2;
+          -webkit-box-orient: vertical;
+          overflow: hidden;
+          text-overflow: ellipsis;
+        }
+        .tab-btn {
+          background: none;
+          border: none;
+          font-weight: 600;
+          font-size: 0.95rem;
+          color: #94a3b8;
+          cursor: pointer;
+          padding: 0.75rem 1rem;
+          position: relative;
+          transition: color 0.2s;
+        }
+        .tab-btn:hover {
+          color: #f1f5f9;
+        }
+        .tab-btn.active {
+          color: #3b82f6;
+        }
+        .tab-btn.active::after {
+          content: '';
+          position: absolute;
+          bottom: 0;
+          left: 0;
+          right: 0;
+          height: 3px;
+          background: #3b82f6;
+          border-radius: 999px;
+        }
+        .shimmer-anim {
+          background: linear-gradient(90deg, rgba(255,255,255,0.03) 25%, rgba(255,255,255,0.08) 37%, rgba(255,255,255,0.03) 63%);
+          background-size: 400% 100%;
+          animation: shimmer-load 1.4s ease infinite;
+        }
+        @keyframes shimmer-load {
+          0% { background-position: 100% 50%; }
+          100% { background-position: 0% 50%; }
+        }
+        .form-input {
+          background: rgba(0, 0, 0, 0.35);
+          border: 1px solid rgba(255, 255, 255, 0.1);
+          border-radius: 8px;
+          color: #f1f5f9;
+          padding: 0.65rem 0.75rem;
+          font-size: 0.9rem;
+          width: 100%;
+          outline: none;
+          transition: border-color 0.2s;
+        }
+        .form-input:focus {
+          border-color: #3b82f6;
+        }
+        .glass-table {
+          width: 100%;
+          border-collapse: collapse;
+          text-align: left;
+        }
+        .glass-table th {
+          color: #64748b;
+          font-weight: 600;
+          font-size: 0.75rem;
+          text-transform: uppercase;
+          letter-spacing: 0.05em;
+          padding: 1rem;
+          border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+        }
+        .glass-table td {
+          padding: 1.25rem 1rem;
+          border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+          color: #94a3b8;
+          font-size: 0.9rem;
+        }
+        .glass-table tr:last-child td {
+          border-bottom: none;
+        }
+        .glass-table tr:hover td {
+          background: rgba(255, 255, 255, 0.02);
+        }
+      `}</style>
+
+      {/* Tabs Menu */}
+      <div style={{ display: 'flex', gap: '1.5rem', borderBottom: '1px solid rgba(255,255,255,0.08)', marginBottom: '2.5rem' }}>
+        <button
+          onClick={() => setActiveTab('activities')}
+          className={`tab-btn ${activeTab === 'activities' ? 'active' : ''}`}
+        >
+          CSR Activities
+        </button>
+        {isAdminOrManager && (
+          <button
+            onClick={() => setActiveTab('approvals')}
+            className={`tab-btn ${activeTab === 'approvals' ? 'active' : ''}`}
+          >
+            Approval Queue
           </button>
         )}
+        <button
+          onClick={() => setActiveTab('diversity')}
+          className={`tab-btn ${activeTab === 'diversity' ? 'active' : ''}`}
+        >
+          Diversity Dashboard
+        </button>
       </div>
 
-      {/* Creation Form */}
-      {showCreateForm && (
-        <div className="card" style={{ borderLeft: '4px solid var(--social)' }}>
-          <h3 style={{ marginBottom: '1.25rem' }}>Create CSR Activity</h3>
-          <form onSubmit={handleCreateSubmit} style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '1rem' }}>
+      {/* CSR ACTIVITIES TAB */}
+      {activeTab === 'activities' && (
+        <div>
+          {/* Header Row */}
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem' }}>
             <div>
-              <label className="label">Activity Title *</label>
-              <input type="text" className="input" placeholder="e.g. Tree Planting Drive" value={title} onChange={(e) => setTitle(e.target.value)} required />
+              <h1 style={{ color: '#f1f5f9', fontWeight: 800, fontSize: '1.5rem', margin: 0 }}>
+                CSR Activities
+              </h1>
+              <p style={{ color: '#94a3b8', fontSize: '0.875rem', margin: '4px 0 0 0' }}>
+                Join social responsibility programs and earn rewarding points.
+              </p>
             </div>
+            {isAdminOrManager && (
+              <button
+                onClick={() => setShowNewActivityModal(true)}
+                style={{
+                  background: '#3b82f6',
+                  color: '#fff',
+                  border: 'none',
+                  borderRadius: '8px',
+                  padding: '0.5rem 1rem',
+                  fontWeight: 600,
+                  fontSize: '0.875rem',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '6px',
+                  cursor: 'pointer',
+                  boxShadow: '0 4px 12px rgba(59, 130, 246, 0.25)',
+                  transition: 'background-color 0.2s'
+                }}
+              >
+                <Plus size={16} /> New Activity
+              </button>
+            )}
+          </div>
 
-            <div>
-              <label className="label">Category *</label>
-              <select className="input" value={catId} onChange={(e) => setCatId(e.target.value)} required>
-                <option value="">Select Category</option>
-                {categories.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
-              </select>
+          {/* Loading Skeleton */}
+          {loading ? (
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(320px, 1fr))', gap: '1.25rem', marginTop: '1.5rem' }}>
+              {[1, 2, 3, 4, 5, 6].map(i => (
+                <div key={i} className="shimmer-anim" style={{ height: '220px', borderRadius: '16px' }} />
+              ))}
             </div>
+          ) : activities.length === 0 ? (
+            <div className="glass-card" style={{ padding: '3rem', textAlign: 'center', color: '#64748b', marginTop: '1.5rem' }}>
+              <Users size={32} style={{ marginBottom: '0.75rem', color: '#64748b' }} />
+              <p style={{ margin: 0, fontWeight: 500 }}>No CSR activities published yet.</p>
+            </div>
+          ) : (
+            /* Activities Grid */
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(320px, 1fr))', gap: '1.25rem', marginTop: '1.5rem' }}>
+              {activities.map(act => {
+                const isDeadlineMissed = act.deadline && new Date(act.deadline) < new Date();
+                return (
+                  <div key={act.id} className="glass-card" style={{ overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>
+                    {/* Top colored line indicator */}
+                    <div style={{ height: '4px', background: '#3b82f6', width: '100%' }} />
 
-            <div>
-              <label className="label">XP Reward *</label>
-              <input type="number" className="input" placeholder="e.g. 50" value={xpReward} onChange={(e) => setXpReward(e.target.value)} required />
-            </div>
-
-            <div>
-              <label className="label">Max Participants</label>
-              <input type="number" className="input" placeholder="e.g. 10 (Leave blank for unlimited)" value={maxParticipants} onChange={(e) => setMaxParticipants(e.target.value)} />
-            </div>
-
-            <div>
-              <label className="label">Deadline</label>
-              <input type="date" className="input" value={deadline} onChange={(e) => setDeadline(e.target.value)} />
-            </div>
-
-            <div style={{ display: 'flex', alignItems: 'center', marginTop: '1.5rem', gap: '0.5rem' }}>
-              <input type="checkbox" id="evidenceRequired" checked={evidenceRequired} onChange={(e) => setEvidenceRequired(e.target.checked)} style={{ width: '16px', height: '16px' }} />
-              <label htmlFor="evidenceRequired" style={{ fontSize: 'var(--text-xs)', fontWeight: '600', color: 'var(--text-primary)', cursor: 'pointer' }}>
-                Evidence File Required to Complete
-              </label>
-            </div>
-
-            <div style={{ gridColumn: '1 / -1' }}>
-              <label className="label">Description *</label>
-              <textarea className="input" rows={3} placeholder="Provide details on the event, location, and timeline..." value={description} onChange={(e) => setDescription(e.target.value)} required style={{ resize: 'vertical' }} />
-            </div>
-
-            <div style={{ gridColumn: '1 / -1', display: 'flex', gap: '0.75rem', justifyContent: 'flex-end', marginTop: '0.5rem' }}>
-              <button type="button" onClick={() => setShowCreateForm(false)} className="btn btn-secondary">Cancel</button>
-              <button type="submit" className="btn btn-primary">Publish Activity</button>
-            </div>
-          </form>
-        </div>
-      )}
-
-      {/* Join Evidence Submission Modal Form overlay style inline */}
-      {joiningActivityId && (
-        <div className="card" style={{ borderLeft: '4px solid var(--gamify)', maxWidth: '480px' }}>
-          <h3 style={{ marginBottom: '1rem' }}>Confirm Participation</h3>
-          <span style={{ fontSize: 'var(--text-xs)', color: 'var(--text-muted)', display: 'block', marginBottom: '1.25rem' }}>
-            Upload evidence and notes below to submit your join request.
-          </span>
-          <form onSubmit={handleJoinSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-            <div>
-              <label className="label">Attach Proof (Image/PDF) *</label>
-              <input 
-                type="file" 
-                className="input" 
-                accept=".jpg,.jpeg,.png,.pdf"
-                onChange={(e) => setProofFile(e.target.files?.[0] || null)}
-                required={activities.find((a) => a.id === joiningActivityId)?.evidenceRequired}
-              />
-            </div>
-            <div>
-              <label className="label">Notes / Details</label>
-              <textarea className="input" rows={2} placeholder="E.g. Completed 2 hours of packing donations." value={notes} onChange={(e) => setNotes(e.target.value)} />
-            </div>
-
-            <div style={{ display: 'flex', gap: '0.75rem', justifyContent: 'flex-end', marginTop: '0.5rem' }}>
-              <button type="button" onClick={() => setJoiningActivityId(null)} className="btn btn-secondary">Cancel</button>
-              <button type="submit" className="btn btn-primary">Submit Join Request</button>
-            </div>
-          </form>
-        </div>
-      )}
-
-      {/* Managers Queue pending approvals */}
-      {user?.role !== 'EMPLOYEE' && pendingParticipations.length > 0 && (
-        <div className="card" style={{ borderLeft: '4px solid var(--status-pending)' }}>
-          <h3 style={{ fontSize: 'var(--text-lg)', fontWeight: '600', marginBottom: '1rem', display: 'flex', alignItems: 'center', gap: '8px' }}>
-            <ShieldAlert size={18} color="var(--status-pending)" /> CSR Approvals Queue ({pendingParticipations.length} Pending)
-          </h3>
-          <div style={{ overflowX: 'auto' }}>
-            <table className="data-table">
-              <thead>
-                <tr>
-                  <th>Employee</th>
-                  <th>Department</th>
-                  <th>CSR Activity</th>
-                  <th>Evidence Proof</th>
-                  <th>Notes</th>
-                  <th style={{ textAlign: 'right' }}>Actions</th>
-                </tr>
-              </thead>
-              <tbody>
-                {pendingParticipations.map((part) => (
-                  <tr key={part.id}>
-                    <td>
-                      <div style={{ display: 'flex', flexDirection: 'column' }}>
-                        <span style={{ fontWeight: '600', color: 'var(--text-primary)' }}>{part.employee.name}</span>
-                        <span style={{ fontSize: 'var(--text-xs)', color: 'var(--text-muted)' }}>{part.employee.email}</span>
-                      </div>
-                    </td>
-                    <td>{part.employee.department?.name || 'N/A'}</td>
-                    <td>{part.activity.title}</td>
-                    <td>
-                      {part.proofUrl ? (
-                        <a href={`http://localhost:5001${part.proofUrl}`} target="_blank" rel="noreferrer" style={{ color: 'var(--social)', display: 'inline-flex', alignItems: 'center', gap: '4px', textDecoration: 'none' }}>
-                          <FileText size={14} /> View Evidence
-                        </a>
-                      ) : (
-                        <span style={{ color: 'var(--text-muted)', fontSize: 'var(--text-xs)' }}>No File Provided</span>
-                      )}
-                    </td>
-                    <td>{part.notes || '—'}</td>
-                    <td>
-                      <div style={{ display: 'flex', gap: '0.5rem', justifyContent: 'flex-end' }}>
-                        {rejectingPartId === part.id ? (
-                          <div style={{ display: 'flex', gap: '0.25rem', alignItems: 'center' }}>
-                            <input 
-                              type="text" 
-                              className="input" 
-                              placeholder="Reason..." 
-                              style={{ padding: '0.25rem', width: '120px', fontSize: 'var(--text-xs)' }}
-                              value={rejectionNotes}
-                              onChange={(e) => setRejectionNotes(e.target.value)}
-                            />
-                            <button onClick={() => triggerReject(part.id)} className="btn btn-danger" style={{ padding: '0.25rem' }}><Check size={12} /></button>
-                            <button onClick={() => setRejectingPartId(null)} className="btn btn-secondary" style={{ padding: '0.25rem' }}><X size={12} /></button>
-                          </div>
-                        ) : (
-                          <>
-                            <button onClick={() => approveParticipation(part.id)} className="btn btn-secondary" style={{ padding: '0.35rem 0.5rem', color: 'var(--status-active)' }}>
-                              <Check size={14} /> Approve
-                            </button>
-                            <button onClick={() => setRejectingPartId(part.id)} className="btn btn-danger" style={{ padding: '0.35rem 0.5rem' }}>
-                              <X size={14} /> Reject
-                            </button>
-                          </>
+                    {/* Card Content */}
+                    <div style={{ padding: '1.25rem', flex: 1, display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+                      {/* Header row */}
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                        <span style={{
+                          background: 'rgba(59, 130, 246, 0.15)',
+                          color: '#3b82f6',
+                          fontSize: '0.75rem',
+                          fontWeight: 600,
+                          borderRadius: '999px',
+                          padding: '2px 10px'
+                        }}>
+                          {act.category?.name || 'CSR'}
+                        </span>
+                        {act.evidenceRequired && (
+                          <span style={{
+                            background: 'rgba(245, 158, 11, 0.15)',
+                            color: '#f59e0b',
+                            fontSize: '0.75rem',
+                            fontWeight: 600,
+                            borderRadius: '999px',
+                            padding: '2px 10px',
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: '4px'
+                          }}>
+                            📎 Evidence Required
+                          </span>
                         )}
                       </div>
-                    </td>
+
+                      {/* Title */}
+                      <h3 style={{ color: '#f1f5f9', fontWeight: 700, fontSize: '1rem', margin: 0 }}>
+                        {act.title}
+                      </h3>
+
+                      {/* Description */}
+                      <p className="text-truncate-2" style={{ color: '#94a3b8', fontSize: '0.875rem', margin: 0, lineHeight: 1.5, flex: 1 }}>
+                        {act.description}
+                      </p>
+
+                      {/* Details row */}
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingTop: '0.5rem', borderTop: '1px solid rgba(255, 255, 255, 0.05)' }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '4px', color: '#f59e0b', fontSize: '0.85rem', fontWeight: 700 }}>
+                          <Award size={16} />
+                          <span>⚡ {act.xpReward} XP</span>
+                        </div>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '4px', color: '#64748b', fontSize: '0.75rem' }}>
+                          <Clock size={12} />
+                          <span>
+                            {act.deadline ? new Date(act.deadline).toLocaleDateString() : 'No Deadline'}
+                          </span>
+                        </div>
+                      </div>
+
+                      {/* Bottom action button or status pill */}
+                      <div style={{ marginTop: '0.5rem' }}>
+                        {act.status === 'DRAFT' ? (
+                          <div style={{
+                            background: 'rgba(255, 255, 255, 0.05)',
+                            color: '#64748b',
+                            padding: '0.5rem',
+                            borderRadius: '8px',
+                            fontSize: '0.875rem',
+                            fontWeight: 600,
+                            textAlign: 'center'
+                          }}>
+                            Draft
+                          </div>
+                        ) : act.joinStatus === 'PENDING' ? (
+                          <div style={{
+                            background: 'rgba(245, 158, 11, 0.15)',
+                            color: '#f59e0b',
+                            padding: '0.5rem',
+                            borderRadius: '8px',
+                            fontSize: '0.875rem',
+                            fontWeight: 600,
+                            textAlign: 'center'
+                          }}>
+                            ⏳ Pending Approval
+                          </div>
+                        ) : act.joinStatus === 'APPROVED' ? (
+                          <div style={{
+                            background: 'rgba(34, 197, 94, 0.15)',
+                            color: '#22c55e',
+                            padding: '0.5rem',
+                            borderRadius: '8px',
+                            fontSize: '0.875rem',
+                            fontWeight: 600,
+                            textAlign: 'center'
+                          }}>
+                            ✅ Approved
+                          </div>
+                        ) : act.joinStatus === 'REJECTED' ? (
+                          <div style={{
+                            background: 'rgba(239, 68, 68, 0.15)',
+                            color: '#ef4444',
+                            padding: '0.5rem',
+                            borderRadius: '8px',
+                            fontSize: '0.875rem',
+                            fontWeight: 600,
+                            textAlign: 'center'
+                          }}>
+                            ❌ Rejected
+                          </div>
+                        ) : act.status === 'ACTIVE' && !isDeadlineMissed ? (
+                          <button
+                            onClick={() => setShowJoinModal({ open: true, activity: act })}
+                            style={{
+                              width: '100%',
+                              background: '#3b82f6',
+                              color: '#fff',
+                              border: 'none',
+                              padding: '0.5rem 1rem',
+                              borderRadius: '8px',
+                              fontWeight: 600,
+                              fontSize: '0.875rem',
+                              cursor: 'pointer',
+                              boxShadow: '0 4px 12px rgba(59, 130, 246, 0.15)',
+                              transition: 'background-color 0.2s'
+                            }}
+                          >
+                            Join Activity
+                          </button>
+                        ) : (
+                          <div style={{
+                            background: 'rgba(255, 255, 255, 0.03)',
+                            color: '#64748b',
+                            padding: '0.5rem',
+                            borderRadius: '8px',
+                            fontSize: '0.875rem',
+                            fontWeight: 600,
+                            textAlign: 'center'
+                          }}>
+                            Activity Ended
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* APPROVAL QUEUE TAB (ADMIN/MANAGER ONLY) */}
+      {activeTab === 'approvals' && isAdminOrManager && (
+        <div className="glass-card" style={{ padding: '1.5rem', overflow: 'hidden' }}>
+          <h2 style={{ color: '#f1f5f9', fontWeight: 800, fontSize: '1.25rem', marginBottom: '1.25rem', marginTop: 0 }}>
+            Approval Queue
+          </h2>
+
+          {loading ? (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+              {[1, 2, 3].map(i => (
+                <div key={i} className="shimmer-anim" style={{ height: '50px', borderRadius: '8px' }} />
+              ))}
+            </div>
+          ) : participations.length === 0 ? (
+            <div style={{ padding: '2rem', textAlign: 'center', color: '#64748b' }}>
+              <CheckCircle size={32} style={{ marginBottom: '0.5rem', color: '#22c55e' }} />
+              <p style={{ margin: 0, fontWeight: 500 }}>All queues are clear! No pending CSR approvals.</p>
+            </div>
+          ) : (
+            <div style={{ overflowX: 'auto' }}>
+              <table className="glass-table">
+                <thead>
+                  <tr>
+                    <th>Employee</th>
+                    <th>Activity</th>
+                    <th>Proof</th>
+                    <th>Points</th>
+                    <th>Status</th>
+                    <th>Actions</th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
+                </thead>
+                <tbody>
+                  {participations.map(part => (
+                    <tr key={part.id}>
+                      <td style={{ color: '#f1f5f9', fontWeight: 700 }}>
+                        {part.employeeName}
+                      </td>
+                      <td>{part.activityTitle}</td>
+                      <td>
+                        {part.proofUrl ? (
+                          <a
+                            href={getProofDownloadUrl(part.proofUrl)}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            style={{
+                              color: '#3b82f6',
+                              textDecoration: 'none',
+                              fontWeight: 600,
+                              display: 'inline-flex',
+                              alignItems: 'center',
+                              gap: '4px'
+                            }}
+                          >
+                            <FileText size={14} /> View Proof
+                          </a>
+                        ) : (
+                          <span style={{ color: '#64748b', fontSize: '0.85rem' }}>No proof</span>
+                        )}
+                      </td>
+                      <td style={{ color: '#f59e0b', fontWeight: 700 }}>
+                        ⚡ {part.pointsEarned || 50}
+                      </td>
+                      <td>
+                        <span style={{
+                          background: 'rgba(245, 158, 11, 0.15)',
+                          color: '#f59e0b',
+                          fontSize: '0.75rem',
+                          fontWeight: 600,
+                          borderRadius: '999px',
+                          padding: '2px 10px'
+                        }}>
+                          {part.approvalStatus}
+                        </span>
+                      </td>
+                      <td>
+                        <div style={{ display: 'flex', gap: '0.5rem' }}>
+                          <button
+                            onClick={() => handleApprove(part.id)}
+                            style={{
+                              background: 'rgba(34, 197, 94, 0.15)',
+                              color: '#22c55e',
+                              border: '1px solid rgba(34, 197, 94, 0.3)',
+                              borderRadius: '6px',
+                              padding: '0.35rem 0.75rem',
+                              fontSize: '0.85rem',
+                              fontWeight: 600,
+                              cursor: 'pointer',
+                              display: 'flex',
+                              alignItems: 'center',
+                              gap: '4px',
+                              transition: 'background-color 0.2s'
+                            }}
+                          >
+                            <CheckCircle size={14} /> Approve
+                          </button>
+                          <button
+                            onClick={() => handleReject(part.id)}
+                            style={{
+                              background: 'rgba(239, 68, 68, 0.15)',
+                              color: '#ef4444',
+                              border: '1px solid rgba(239, 68, 68, 0.3)',
+                              borderRadius: '6px',
+                              padding: '0.35rem 0.75rem',
+                              fontSize: '0.85rem',
+                              fontWeight: 600,
+                              cursor: 'pointer',
+                              display: 'flex',
+                              alignItems: 'center',
+                              gap: '4px',
+                              transition: 'background-color 0.2s'
+                            }}
+                          >
+                            <XCircle size={14} /> Reject
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* DIVERSITY DASHBOARD TAB */}
+      {activeTab === 'diversity' && (
+        <div className="glass-card" style={{ padding: '3rem', textAlign: 'center', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }}>
+          <Users size={48} style={{ color: '#64748b', marginBottom: '1rem' }} />
+          <h2 style={{ color: '#f1f5f9', fontWeight: 800, fontSize: '1.25rem', margin: '0 0 0.5rem 0' }}>
+            Diversity Dashboard
+          </h2>
+          <p style={{ color: '#94a3b8', fontSize: '0.9rem', maxWidth: '380px', margin: 0, lineHeight: 1.5 }}>
+            Diversity metrics coming soon — powered by HR integration.
+          </p>
+        </div>
+      )}
+
+      {/* JOIN ACTIVITY MODAL */}
+      {showJoinModal.open && showJoinModal.activity && (
+        <div style={{
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          background: 'rgba(0, 0, 0, 0.65)',
+          backdropFilter: 'blur(4px)',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          zIndex: 1000
+        }}>
+          <div className="glass-card" style={{ width: '100%', maxWidth: '480px', padding: '1.5rem', display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
+            <div>
+              <h2 style={{ color: '#f1f5f9', fontWeight: 800, fontSize: '1.25rem', margin: 0 }}>
+                Join Activity
+              </h2>
+              <p style={{ color: '#94a3b8', fontSize: '0.85rem', margin: '4px 0 0 0' }}>
+                Confirm your participation in <strong>{showJoinModal.activity.title}</strong>
+              </p>
+            </div>
+
+            <form onSubmit={handleJoinActivity} style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+              {/* File Upload Area */}
+              {showJoinModal.activity.evidenceRequired && (
+                <div>
+                  <label style={{ display: 'block', color: '#f1f5f9', fontSize: '0.85rem', fontWeight: 600, marginBottom: '0.5rem' }}>
+                    Upload proof file *
+                  </label>
+                  <div
+                    onDragOver={(e) => { e.preventDefault(); setDragOver(true); }}
+                    onDragLeave={() => setDragOver(false)}
+                    onDrop={(e) => {
+                      e.preventDefault();
+                      setDragOver(false);
+                      if (e.dataTransfer.files && e.dataTransfer.files[0]) {
+                        setProofFile(e.dataTransfer.files[0]);
+                      }
+                    }}
+                    style={{
+                      border: `2px dashed ${dragOver ? '#3b82f6' : 'rgba(255, 255, 255, 0.15)'}`,
+                      borderRadius: '12px',
+                      padding: '2rem',
+                      textAlign: 'center',
+                      background: dragOver ? 'rgba(59, 130, 246, 0.05)' : 'rgba(0, 0, 0, 0.25)',
+                      cursor: 'pointer',
+                      transition: 'all 0.2s',
+                      position: 'relative'
+                    }}
+                    onClick={() => document.getElementById('modal-proof-input')?.click()}
+                  >
+                    <Upload size={28} style={{ color: dragOver ? '#3b82f6' : '#94a3b8', marginBottom: '0.75rem' }} />
+                    <p style={{ margin: 0, fontSize: '0.875rem', fontWeight: 600, color: '#f1f5f9' }}>
+                      {proofFile ? proofFile.name : 'Upload proof file'}
+                    </p>
+                    <p style={{ margin: '4px 0 0 0', fontSize: '0.75rem', color: '#94a3b8' }}>
+                      Drag & drop or click to select
+                    </p>
+                    <input
+                      id="modal-proof-input"
+                      type="file"
+                      accept="image/*,application/pdf"
+                      onChange={(e) => setProofFile(e.target.files?.[0] || null)}
+                      style={{ display: 'none' }}
+                    />
+                  </div>
+                </div>
+              )}
+
+              {/* Action Buttons */}
+              <div style={{ display: 'flex', gap: '0.75rem', justifyContent: 'flex-end', marginTop: '0.5rem' }}>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setShowJoinModal({ open: false, activity: null });
+                    setProofFile(null);
+                  }}
+                  style={{
+                    background: 'rgba(255, 255, 255, 0.05)',
+                    border: '1px solid rgba(255, 255, 255, 0.08)',
+                    borderRadius: '8px',
+                    color: '#94a3b8',
+                    padding: '0.5rem 1rem',
+                    fontWeight: 600,
+                    cursor: 'pointer',
+                    fontSize: '0.875rem'
+                  }}
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  style={{
+                    background: '#3b82f6',
+                    border: 'none',
+                    borderRadius: '8px',
+                    color: '#fff',
+                    padding: '0.5rem 1rem',
+                    fontWeight: 600,
+                    cursor: 'pointer',
+                    fontSize: '0.875rem',
+                    boxShadow: '0 4px 12px rgba(59, 130, 246, 0.25)'
+                  }}
+                >
+                  Join Drive
+                </button>
+              </div>
+            </form>
           </div>
         </div>
       )}
 
-      {/* Grid of CSR Activity Cards */}
-      <div>
-        <h3 style={{ fontSize: 'var(--text-lg)', fontWeight: '600', marginBottom: '1.25rem' }}>Open CSR Volunteering Drives</h3>
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: '1.5rem' }}>
-          {activities.length === 0 ? (
-            <div className="card" style={{ gridColumn: '1 / -1', padding: '3rem', textAlign: 'center', color: 'var(--text-muted)' }}>
-              No CSR activities published yet.
+      {/* NEW ACTIVITY MODAL (ADMIN/MANAGER ONLY) */}
+      {showNewActivityModal && isAdminOrManager && (
+        <div style={{
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          background: 'rgba(0, 0, 0, 0.65)',
+          backdropFilter: 'blur(4px)',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          zIndex: 1000
+        }}>
+          <div className="glass-card" style={{ width: '100%', maxWidth: '520px', padding: '1.5rem', display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
+            <div>
+              <h2 style={{ color: '#f1f5f9', fontWeight: 800, fontSize: '1.25rem', margin: 0 }}>
+                Create CSR Activity
+              </h2>
+              <p style={{ color: '#94a3b8', fontSize: '0.85rem', margin: '4px 0 0 0' }}>
+                Fill in the details to publish a new CSR drive.
+              </p>
             </div>
-          ) : (
-            activities.map((act) => {
-              const userPart = act.participations.find((p: any) => p.employeeId === user?.id);
-              const approvedCount = act.participations.filter((p: any) => p.approvalStatus === 'APPROVED').length;
-              const hasJoined = !!userPart;
 
-              return (
-                <div key={act.id} className="card" style={{ display: 'flex', flexDirection: 'column', gap: '1rem', borderTop: '3px solid var(--social)' }}>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-                    <span style={{ fontSize: '10px', fontWeight: 'bold', color: 'var(--social)', textTransform: 'uppercase' }}>
-                      {act.category?.name}
-                    </span>
-                    {userPart && (
-                      <span className={`badge ${userPart.approvalStatus === 'APPROVED' ? 'badge--active' : userPart.approvalStatus === 'PENDING' ? 'badge--pending' : 'badge--high'}`}>
-                        {userPart.approvalStatus}
-                      </span>
-                    )}
-                  </div>
+            <form onSubmit={handleCreateActivity} style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+              {/* Title */}
+              <div>
+                <label style={{ display: 'block', color: '#f1f5f9', fontSize: '0.85rem', fontWeight: 600, marginBottom: '0.4rem' }}>
+                  Title *
+                </label>
+                <input
+                  type="text"
+                  required
+                  className="form-input"
+                  placeholder="e.g. Tree Planting Drive"
+                  value={newTitle}
+                  onChange={(e) => setNewTitle(e.target.value)}
+                />
+              </div>
 
-                  <h3 style={{ fontSize: 'var(--text-lg)', fontWeight: '700', color: 'var(--text-primary)', marginTop: '-0.25rem' }}>
-                    {act.title}
-                  </h3>
-
-                  <p style={{ fontSize: 'var(--text-sm)', color: 'var(--text-secondary)', flex: 1, lineBreak: 'anywhere' }}>
-                    {act.description}
-                  </p>
-
-                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem', borderTop: '1px solid rgba(255,255,255,0.03)', paddingTop: '0.75rem', fontSize: 'var(--text-xs)', color: 'var(--text-muted)' }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
-                      <Calendar size={14} />
-                      <span>{act.deadline ? new Date(act.deadline).toLocaleDateString() : 'No Limit'}</span>
-                    </div>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
-                      <Users size={14} />
-                      <span>{approvedCount} / {act.maxParticipants || '∞'} Joined</span>
-                    </div>
-                  </div>
-
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '0.5rem' }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '4px', fontSize: 'var(--text-sm)', fontWeight: '700', color: 'var(--gamify)' }}>
-                      <Award size={16} />
-                      <span>+{act.xpReward} XP</span>
-                    </div>
-                    
-                    {!hasJoined && user?.role === 'EMPLOYEE' && (
-                      <button 
-                        onClick={() => setJoiningActivityId(act.id)} 
-                        className="btn btn-primary"
-                        style={{ padding: '0.4rem 1rem' }}
-                      >
-                        Join Drive
-                      </button>
-                    )}
-                  </div>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
+                {/* Category */}
+                <div>
+                  <label style={{ display: 'block', color: '#f1f5f9', fontSize: '0.85rem', fontWeight: 600, marginBottom: '0.4rem' }}>
+                    Category *
+                  </label>
+                  <select
+                    required
+                    className="form-input"
+                    value={newCategoryId}
+                    onChange={(e) => setNewCategoryId(e.target.value)}
+                    style={{ background: 'rgba(0, 0, 0, 0.35)', color: '#f1f5f9' }}
+                  >
+                    <option value="" disabled>Select category</option>
+                    {categories.map(c => (
+                      <option key={c.id} value={c.id} style={{ background: '#161a23' }}>{c.name}</option>
+                    ))}
+                  </select>
                 </div>
-              );
-            })
-          )}
+
+                {/* XP Reward */}
+                <div>
+                  <label style={{ display: 'block', color: '#f1f5f9', fontSize: '0.85rem', fontWeight: 600, marginBottom: '0.4rem' }}>
+                    XP Reward *
+                  </label>
+                  <input
+                    type="number"
+                    required
+                    min={0}
+                    className="form-input"
+                    value={newXpReward}
+                    onChange={(e) => setNewXpReward(parseInt(e.target.value) || 0)}
+                  />
+                </div>
+              </div>
+
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
+                {/* Deadline */}
+                <div>
+                  <label style={{ display: 'block', color: '#f1f5f9', fontSize: '0.85rem', fontWeight: 600, marginBottom: '0.4rem' }}>
+                    Deadline
+                  </label>
+                  <input
+                    type="date"
+                    className="form-input"
+                    value={newDeadline}
+                    onChange={(e) => setNewDeadline(e.target.value)}
+                  />
+                </div>
+
+                {/* Max Participants */}
+                <div>
+                  <label style={{ display: 'block', color: '#f1f5f9', fontSize: '0.85rem', fontWeight: 600, marginBottom: '0.4rem' }}>
+                    Max Participants
+                  </label>
+                  <input
+                    type="number"
+                    min={1}
+                    className="form-input"
+                    placeholder="e.g. 50 (Unlimited if blank)"
+                    value={newMaxParticipants}
+                    onChange={(e) => setNewMaxParticipants(e.target.value)}
+                  />
+                </div>
+              </div>
+
+              {/* Description */}
+              <div>
+                <label style={{ display: 'block', color: '#f1f5f9', fontSize: '0.85rem', fontWeight: 600, marginBottom: '0.4rem' }}>
+                  Description *
+                </label>
+                <textarea
+                  required
+                  rows={3}
+                  className="form-input"
+                  placeholder="Provide activity details, location, and dates..."
+                  value={newDescription}
+                  onChange={(e) => setNewDescription(e.target.value)}
+                  style={{ resize: 'none' }}
+                />
+              </div>
+
+              {/* Toggle Switch */}
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', background: 'rgba(255,255,255,0.03)', padding: '0.75rem', borderRadius: '8px', border: '1px solid rgba(255,255,255,0.05)' }}>
+                <div>
+                  <span style={{ display: 'block', color: '#f1f5f9', fontSize: '0.85rem', fontWeight: 600 }}>
+                    Evidence File Required
+                  </span>
+                  <span style={{ display: 'block', color: '#64748b', fontSize: '0.75rem' }}>
+                    Require employees to upload proof when joining.
+                  </span>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setEvidenceRequired(!evidenceRequired)}
+                  style={{
+                    position: 'relative',
+                    width: '48px',
+                    height: '24px',
+                    borderRadius: '12px',
+                    background: evidenceRequired ? '#3b82f6' : 'rgba(255, 255, 255, 0.15)',
+                    border: 'none',
+                    cursor: 'pointer',
+                    transition: 'background-color 0.2s',
+                    padding: 0
+                  }}
+                >
+                  <div
+                    style={{
+                      position: 'absolute',
+                      top: '2px',
+                      left: evidenceRequired ? '26px' : '2px',
+                      width: '20px',
+                      height: '20px',
+                      borderRadius: '50%',
+                      background: '#fff',
+                      transition: 'left 0.2s'
+                    }}
+                  />
+                </button>
+              </div>
+
+              {/* Action Buttons */}
+              <div style={{ display: 'flex', gap: '0.75rem', justifyContent: 'flex-end', marginTop: '0.5rem' }}>
+                <button
+                  type="button"
+                  onClick={() => setShowNewActivityModal(false)}
+                  style={{
+                    background: 'rgba(255, 255, 255, 0.05)',
+                    border: '1px solid rgba(255, 255, 255, 0.08)',
+                    borderRadius: '8px',
+                    color: '#94a3b8',
+                    padding: '0.5rem 1rem',
+                    fontWeight: 600,
+                    cursor: 'pointer',
+                    fontSize: '0.875rem'
+                  }}
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  style={{
+                    background: '#3b82f6',
+                    border: 'none',
+                    borderRadius: '8px',
+                    color: '#fff',
+                    padding: '0.5rem 1rem',
+                    fontWeight: 600,
+                    cursor: 'pointer',
+                    fontSize: '0.875rem',
+                    boxShadow: '0 4px 12px rgba(59, 130, 246, 0.25)'
+                  }}
+                >
+                  Create
+                </button>
+              </div>
+            </form>
+          </div>
         </div>
-      </div>
+      )}
     </div>
   );
 };
