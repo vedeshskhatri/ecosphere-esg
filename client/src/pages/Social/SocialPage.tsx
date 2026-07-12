@@ -854,12 +854,12 @@ export const SocialPage: React.FC = () => {
           justifyContent: 'center',
           zIndex: 1000
         }}>
-          <div className="glass-card" style={{ width: '100%', maxWidth: '520px', padding: '1.5rem', display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
+          <div className="glass-card" style={{ width: '100%', maxWidth: '520px', padding: '1.5rem', display: 'flex', flexDirection: 'column', gap: '1.25rem', backgroundColor: '#ffffff', border: '1px solid rgba(25, 53, 12, 0.12)', boxShadow: '0 10px 30px rgba(25, 53, 12, 0.1)' }}>
             <div>
-              <h2 style={{ color: '#f1f5f9', fontWeight: 800, fontSize: '1.25rem', margin: 0 }}>
+              <h2 style={{ color: '#19350C', fontWeight: 800, fontSize: '1.25rem', margin: 0 }}>
                 Create CSR Activity
               </h2>
-              <p style={{ color: '#94a3b8', fontSize: '0.85rem', margin: '4px 0 0 0' }}>
+              <p style={{ color: '#3D4A28', fontSize: '0.85rem', margin: '4px 0 0 0', fontWeight: 500 }}>
                 Fill in the details to publish a new CSR drive.
               </p>
             </div>
@@ -867,7 +867,7 @@ export const SocialPage: React.FC = () => {
             <form onSubmit={handleCreateActivity} style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
               {/* Title */}
               <div>
-                <label style={{ display: 'block', color: '#f1f5f9', fontSize: '0.85rem', fontWeight: 600, marginBottom: '0.4rem' }}>
+                <label style={{ display: 'block', color: '#19350C', fontSize: '0.85rem', fontWeight: 600, marginBottom: '0.4rem' }}>
                   Title *
                 </label>
                 <input
@@ -877,13 +877,14 @@ export const SocialPage: React.FC = () => {
                   placeholder="e.g. Tree Planting Drive"
                   value={newTitle}
                   onChange={(e) => setNewTitle(e.target.value)}
+                  style={{ background: '#ffffff', color: '#19350C', border: '1px solid rgba(25, 53, 12, 0.15)' }}
                 />
               </div>
 
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
                 {/* Category */}
                 <div>
-                  <label style={{ display: 'block', color: '#f1f5f9', fontSize: '0.85rem', fontWeight: 600, marginBottom: '0.4rem' }}>
+                  <label style={{ display: 'block', color: '#19350C', fontSize: '0.85rem', fontWeight: 600, marginBottom: '0.4rem' }}>
                     Category *
                   </label>
                   <select
@@ -891,18 +892,18 @@ export const SocialPage: React.FC = () => {
                     className="form-input"
                     value={newCategoryId}
                     onChange={(e) => setNewCategoryId(e.target.value)}
-                    style={{ background: 'rgba(0, 0, 0, 0.35)', color: '#f1f5f9' }}
+                    style={{ background: '#ffffff', color: '#19350C', border: '1px solid rgba(25, 53, 12, 0.15)' }}
                   >
-                    <option value="" disabled>Select category</option>
+                    <option value="" disabled style={{ background: '#ffffff', color: '#19350C' }}>Select category</option>
                     {categories.map(c => (
-                      <option key={c.id} value={c.id} style={{ background: '#161a23' }}>{c.name}</option>
+                      <option key={c.id} value={c.id} style={{ background: '#ffffff', color: '#19350C' }}>{c.name}</option>
                     ))}
                   </select>
                 </div>
 
                 {/* XP Reward */}
                 <div>
-                  <label style={{ display: 'block', color: '#f1f5f9', fontSize: '0.85rem', fontWeight: 600, marginBottom: '0.4rem' }}>
+                  <label style={{ display: 'block', color: '#19350C', fontSize: '0.85rem', fontWeight: 600, marginBottom: '0.4rem' }}>
                     XP Reward *
                   </label>
                   <input
@@ -912,6 +913,7 @@ export const SocialPage: React.FC = () => {
                     className="form-input"
                     value={newXpReward}
                     onChange={(e) => setNewXpReward(parseInt(e.target.value) || 0)}
+                    style={{ background: '#ffffff', color: '#19350C', border: '1px solid rgba(25, 53, 12, 0.15)' }}
                   />
                 </div>
               </div>
@@ -919,7 +921,7 @@ export const SocialPage: React.FC = () => {
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
                 {/* Deadline */}
                 <div>
-                  <label style={{ display: 'block', color: '#f1f5f9', fontSize: '0.85rem', fontWeight: 600, marginBottom: '0.4rem' }}>
+                  <label style={{ display: 'block', color: '#19350C', fontSize: '0.85rem', fontWeight: 600, marginBottom: '0.4rem' }}>
                     Deadline
                   </label>
                   <input
@@ -927,12 +929,13 @@ export const SocialPage: React.FC = () => {
                     className="form-input"
                     value={newDeadline}
                     onChange={(e) => setNewDeadline(e.target.value)}
+                    style={{ background: '#ffffff', color: '#19350C', border: '1px solid rgba(25, 53, 12, 0.15)' }}
                   />
                 </div>
 
                 {/* Max Participants */}
                 <div>
-                  <label style={{ display: 'block', color: '#f1f5f9', fontSize: '0.85rem', fontWeight: 600, marginBottom: '0.4rem' }}>
+                  <label style={{ display: 'block', color: '#19350C', fontSize: '0.85rem', fontWeight: 600, marginBottom: '0.4rem' }}>
                     Max Participants
                   </label>
                   <input
@@ -942,13 +945,14 @@ export const SocialPage: React.FC = () => {
                     placeholder="e.g. 50 (Unlimited if blank)"
                     value={newMaxParticipants}
                     onChange={(e) => setNewMaxParticipants(e.target.value)}
+                    style={{ background: '#ffffff', color: '#19350C', border: '1px solid rgba(25, 53, 12, 0.15)' }}
                   />
                 </div>
               </div>
 
               {/* Description */}
               <div>
-                <label style={{ display: 'block', color: '#f1f5f9', fontSize: '0.85rem', fontWeight: 600, marginBottom: '0.4rem' }}>
+                <label style={{ display: 'block', color: '#19350C', fontSize: '0.85rem', fontWeight: 600, marginBottom: '0.4rem' }}>
                   Description *
                 </label>
                 <textarea
@@ -958,17 +962,17 @@ export const SocialPage: React.FC = () => {
                   placeholder="Provide activity details, location, and dates..."
                   value={newDescription}
                   onChange={(e) => setNewDescription(e.target.value)}
-                  style={{ resize: 'none' }}
+                  style={{ resize: 'none', background: '#ffffff', color: '#19350C', border: '1px solid rgba(25, 53, 12, 0.15)' }}
                 />
               </div>
 
               {/* Toggle Switch */}
-              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', background: 'rgba(255,255,255,0.03)', padding: '0.75rem', borderRadius: '8px', border: '1px solid rgba(255,255,255,0.05)' }}>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', background: 'rgba(25, 53, 12, 0.03)', padding: '0.75rem', borderRadius: '8px', border: '1px solid rgba(25, 53, 12, 0.08)' }}>
                 <div>
-                  <span style={{ display: 'block', color: '#f1f5f9', fontSize: '0.85rem', fontWeight: 600 }}>
+                  <span style={{ display: 'block', color: '#19350C', fontSize: '0.85rem', fontWeight: 600 }}>
                     Evidence File Required
                   </span>
-                  <span style={{ display: 'block', color: '#64748b', fontSize: '0.75rem' }}>
+                  <span style={{ display: 'block', color: '#3D4A28', fontSize: '0.75rem', fontWeight: 500 }}>
                     Require employees to upload proof when joining.
                   </span>
                 </div>
@@ -980,8 +984,8 @@ export const SocialPage: React.FC = () => {
                     width: '48px',
                     height: '24px',
                     borderRadius: '12px',
-                    background: evidenceRequired ? '#3b82f6' : 'rgba(255, 255, 255, 0.15)',
-                    border: 'none',
+                    background: evidenceRequired ? '#687D31' : 'rgba(25, 53, 12, 0.12)',
+                    border: '1px solid rgba(25, 53, 12, 0.15)',
                     cursor: 'pointer',
                     transition: 'background-color 0.2s',
                     padding: 0
@@ -990,12 +994,13 @@ export const SocialPage: React.FC = () => {
                   <div
                     style={{
                       position: 'absolute',
-                      top: '2px',
-                      left: evidenceRequired ? '26px' : '2px',
+                      top: '1px',
+                      left: evidenceRequired ? '25px' : '1px',
                       width: '20px',
                       height: '20px',
                       borderRadius: '50%',
-                      background: '#fff',
+                      background: '#ffffff',
+                      boxShadow: '0 1px 3px rgba(0,0,0,0.15)',
                       transition: 'left 0.2s'
                     }}
                   />
@@ -1008,10 +1013,10 @@ export const SocialPage: React.FC = () => {
                   type="button"
                   onClick={() => setShowNewActivityModal(false)}
                   style={{
-                    background: 'rgba(255, 255, 255, 0.05)',
-                    border: '1px solid rgba(255, 255, 255, 0.08)',
+                    background: 'rgba(25, 53, 12, 0.05)',
+                    border: '1px solid rgba(25, 53, 12, 0.1)',
                     borderRadius: '8px',
-                    color: '#94a3b8',
+                    color: '#3D4A28',
                     padding: '0.5rem 1rem',
                     fontWeight: 600,
                     cursor: 'pointer',
@@ -1023,7 +1028,7 @@ export const SocialPage: React.FC = () => {
                 <button
                   type="submit"
                   style={{
-                    background: '#3b82f6',
+                    background: '#687D31',
                     border: 'none',
                     borderRadius: '8px',
                     color: '#fff',
@@ -1031,7 +1036,7 @@ export const SocialPage: React.FC = () => {
                     fontWeight: 600,
                     cursor: 'pointer',
                     fontSize: '0.875rem',
-                    boxShadow: '0 4px 12px rgba(59, 130, 246, 0.25)'
+                    boxShadow: '0 4px 12px rgba(104, 125, 49, 0.2)'
                   }}
                 >
                   Create
