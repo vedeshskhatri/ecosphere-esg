@@ -341,9 +341,19 @@ export const useEsgStore = create<ESGState>((set, get) => {
     },
 
     createPolicy: async (policy: any) => {
-      await api.post('/governance/policies', policy);
-      toast.success('ESG policy drafted successfully!');
-      get().fetchGovernanceData();
+      try {
+        await api.post('/governance/policies', policy);
+        toast.success('ESG policy drafted successfully!');
+        get().fetchGovernanceData();
+        return true;
+      } catch (err: any) {
+        const details = err.response?.data?.details;
+        const errMsg = details && details.length > 0 
+          ? details.map((d: any) => d.message).join(', ') 
+          : (err.response?.data?.error || 'Failed to create policy.');
+        toast.error(errMsg);
+        return false;
+      }
     },
 
     updatePolicyStatus: async (policyId: string, status: string) => {
@@ -362,10 +372,20 @@ export const useEsgStore = create<ESGState>((set, get) => {
     },
 
     createAudit: async (audit: any) => {
-      await api.post('/governance/audits', audit);
-      toast.success('Department audit scheduled!');
-      get().fetchGovernanceData();
-      get().fetchDashboardData();
+      try {
+        await api.post('/governance/audits', audit);
+        toast.success('Department audit scheduled!');
+        get().fetchGovernanceData();
+        get().fetchDashboardData();
+        return true;
+      } catch (err: any) {
+        const details = err.response?.data?.details;
+        const errMsg = details && details.length > 0 
+          ? details.map((d: any) => d.message).join(', ') 
+          : (err.response?.data?.error || 'Failed to create audit.');
+        toast.error(errMsg);
+        return false;
+      }
     },
 
     updateAuditStatus: async (auditId: string, status: string, findings?: string) => {
@@ -375,10 +395,20 @@ export const useEsgStore = create<ESGState>((set, get) => {
     },
 
     createComplianceIssue: async (issue: any) => {
-      await api.post('/governance/issues', issue);
-      toast.success('Compliance issue logged!');
-      get().fetchGovernanceData();
-      get().fetchDashboardData();
+      try {
+        await api.post('/governance/issues', issue);
+        toast.success('Compliance issue logged!');
+        get().fetchGovernanceData();
+        get().fetchDashboardData();
+        return true;
+      } catch (err: any) {
+        const details = err.response?.data?.details;
+        const errMsg = details && details.length > 0 
+          ? details.map((d: any) => d.message).join(', ') 
+          : (err.response?.data?.error || 'Failed to log compliance issue.');
+        toast.error(errMsg);
+        return false;
+      }
     },
 
     updateComplianceIssueStatus: async (issueId: string, status: string) => {
