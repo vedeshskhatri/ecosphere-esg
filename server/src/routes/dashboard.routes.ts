@@ -104,11 +104,14 @@ router.get('/', requireAuth, async (req: AuthRequest, res: Response) => {
             const latestScore = await prisma.departmentScore.findFirst({
               where: { departmentId: dept.id },
               orderBy: { calculatedAt: 'desc' },
-              select: { totalScore: true }
+              select: { totalScore: true, envScore: true, socialScore: true, govScore: true }
             });
             return {
               departmentName: dept.name,
-              score: latestScore ? Number(latestScore.totalScore) : 50
+              score: latestScore ? Number(latestScore.totalScore) : 50,
+              envScore: latestScore ? Number(latestScore.envScore) : 50,
+              socialScore: latestScore ? Number(latestScore.socialScore) : 50,
+              govScore: latestScore ? Number(latestScore.govScore) : 50
             };
           })
         );

@@ -1,5 +1,6 @@
 import prisma from '../lib/prisma';
 import { emitToAll } from '../socket/eventBus';
+import { NudgeEngine } from './NudgeEngine';
 
 export interface DeptScoreResult {
   departmentId: string;
@@ -182,12 +183,66 @@ export class ScoringEngine {
   }
 
   /**
+   * Calculates the overall organization ESG score parts (average env, social, gov, and total).
+   */
+  static async calculateOrgScores(): Promise<{ envScore: number; socialScore: number; govScore: number; totalScore: number }> {
+    try {
+      const departments = await prisma.department.findMany({
+        where: { status: 'ACTIVE' },
+        select: { id: true },
+      });
+
+      if (departments.length === 0) {
+        return { envScore: 50, socialScore: 50, govScore: 50, totalScore: 50 };
+      }
+
+      let envSum = 0;
+      let socialSum = 0;
+      let govSum = 0;
+      let totalSum = 0;
+      let count = 0;
+
+      for (const dept of departments) {
+        const latestScore = await prisma.departmentScore.findFirst({
+          where: { departmentId: dept.id },
+          orderBy: { calculatedAt: 'desc' },
+        });
+
+        if (latestScore) {
+          envSum += Number(latestScore.envScore);
+          socialSum += Number(latestScore.socialScore);
+          govSum += Number(latestScore.govScore);
+          totalSum += Number(latestScore.totalScore);
+          count++;
+        }
+      }
+
+      if (count === 0) {
+        return { envScore: 50, socialScore: 50, govScore: 50, totalScore: 50 };
+      }
+
+      return {
+        envScore: envSum / count,
+        socialScore: socialSum / count,
+        govScore: govSum / count,
+        totalScore: totalSum / count,
+      };
+    } catch (error) {
+      console.error('[ScoringEngine] Error calculating org scores:', error);
+      return { envScore: 50, socialScore: 50, govScore: 50, totalScore: 50 };
+    }
+  }
+
+  /**
    * Recalculates department & org scores, updates DB, and emits live updates over Socket.IO.
    */
   static async recalculateAndEmit(departmentId: string): Promise<void> {
     try {
       const deptScores = await this.calculateDepartmentScore(departmentId);
       const orgScore = await this.calculateOrgScore();
+
+      // Refresh behavioral nudges dynamically
+      await NudgeEngine.evaluateNudges();
 
       emitToAll('score:update', {
         departmentId,
