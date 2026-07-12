@@ -5,7 +5,7 @@ import { socket } from '../../lib/socket';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   Trophy, Star, Gift, Users, Plus, CheckCircle, XCircle, Zap, Lock, Crown,
-  Clock, Upload, FileText, ChevronRight
+  Clock, Upload, FileText
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 
