@@ -27,6 +27,7 @@ async function main() {
   await prisma.reward.deleteMany();
   await prisma.badge.deleteMany();
   await prisma.esgPolicy.deleteMany();
+  await prisma.product.deleteMany();
   await prisma.environmentalGoal.deleteMany();
   await prisma.emissionFactor.deleteMany();
   await prisma.category.deleteMany();
@@ -72,6 +73,8 @@ async function main() {
       role: 'ADMIN',
       status: 'ACTIVE',
       departmentId: corDept.id,
+      gender: 'MALE',
+      joinDate: new Date('2024-01-15'),
     },
   });
 
@@ -84,6 +87,8 @@ async function main() {
       role: 'MANAGER',
       status: 'ACTIVE',
       departmentId: mfgDept.id,
+      gender: 'MALE',
+      joinDate: new Date('2024-03-01'),
     },
   });
   const logManager = await prisma.user.create({
@@ -94,6 +99,8 @@ async function main() {
       role: 'MANAGER',
       status: 'ACTIVE',
       departmentId: logDept.id,
+      gender: 'MALE',
+      joinDate: new Date('2024-03-10'),
     },
   });
   const corManager = await prisma.user.create({
@@ -104,6 +111,8 @@ async function main() {
       role: 'MANAGER',
       status: 'ACTIVE',
       departmentId: corDept.id,
+      gender: 'FEMALE',
+      joinDate: new Date('2024-05-20'),
     },
   });
 
@@ -114,12 +123,12 @@ async function main() {
 
   // Employees
   const employeesData = [
-    { name: 'John Mfg', email: 'john.mfg@ecosphere.com', deptId: mfgDept.id, xp: 450, points: 450 },
-    { name: 'Sarah Mfg', email: 'sarah.mfg@ecosphere.com', deptId: mfgDept.id, xp: 850, points: 850 },
-    { name: 'Alex Log', email: 'alex.log@ecosphere.com', deptId: logDept.id, xp: 220, points: 220 },
-    { name: 'Emma Log', email: 'emma.log@ecosphere.com', deptId: logDept.id, xp: 610, points: 610 },
-    { name: 'David Cor', email: 'david.cor@ecosphere.com', deptId: corDept.id, xp: 340, points: 340 },
-    { name: 'Lisa Cor', email: 'lisa.cor@ecosphere.com', deptId: corDept.id, xp: 1200, points: 200 }, // Redeemed some rewards
+    { name: 'John Mfg', email: 'john.mfg@ecosphere.com', deptId: mfgDept.id, xp: 450, points: 450, gender: 'MALE', joinDate: new Date('2025-01-10') },
+    { name: 'Sarah Mfg', email: 'sarah.mfg@ecosphere.com', deptId: mfgDept.id, xp: 850, points: 850, gender: 'FEMALE', joinDate: new Date('2025-02-14') },
+    { name: 'Alex Log', email: 'alex.log@ecosphere.com', deptId: logDept.id, xp: 220, points: 220, gender: 'MALE', joinDate: new Date('2025-03-01') },
+    { name: 'Emma Log', email: 'emma.log@ecosphere.com', deptId: logDept.id, xp: 610, points: 610, gender: 'FEMALE', joinDate: new Date('2025-04-18') },
+    { name: 'David Cor', email: 'david.cor@ecosphere.com', deptId: corDept.id, xp: 340, points: 340, gender: 'MALE', joinDate: new Date('2025-05-05') },
+    { name: 'Lisa Cor', email: 'lisa.cor@ecosphere.com', deptId: corDept.id, xp: 1200, points: 200, gender: 'FEMALE', joinDate: new Date('2025-05-15') },
   ];
 
   const employees: any[] = [];
@@ -134,6 +143,8 @@ async function main() {
         departmentId: emp.deptId,
         xp: emp.xp,
         pointsBalance: emp.points,
+        gender: emp.gender,
+        joinDate: emp.joinDate,
       },
     });
     employees.push(user);

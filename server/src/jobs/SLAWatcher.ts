@@ -2,6 +2,7 @@ import cron from 'node-cron';
 import prisma from '../lib/prisma';
 import { createNotification } from '../services/NotificationService';
 import { emitToAll, emitToUser } from '../socket/eventBus';
+import { EmailService } from '../services/EmailService';
 
 /**
  * Starts the background SLA Compliance Watcher cron job.
@@ -21,6 +22,9 @@ export function startSLAWatcher(): void {
           dueDate: { lt: now },
           isOverdue: false,
         },
+        include: {
+          owner: { select: { name: true, email: true } },
+        },
       });
 
       if (overdueIssues.length === 0) {
@@ -38,7 +42,7 @@ export function startSLAWatcher(): void {
         });
 
         // Create notification for the issue owner
-        const notification = await createNotification({
+        await createNotification({
           userId: issue.ownerId,
           type: 'COMPLIANCE_OVERDUE',
           title: 'SLA BREACH: Compliance Issue Overdue',
@@ -46,6 +50,20 @@ export function startSLAWatcher(): void {
           refType: 'ComplianceIssue',
           refId: issue.id,
         });
+
+        // Send simulated email warning to owner
+        if (issue.owner) {
+          const emailHtml = EmailService.getSlaOverdueTemplate(
+            issue.owner.name,
+            issue.description,
+            issue.dueDate
+          );
+          EmailService.sendAlertEmail(
+            issue.owner.email,
+            '⚠️ SLA BREACH: Compliance Issue Overdue',
+            emailHtml
+          );
+        }
 
         // Emit general websocket event
         emitToAll('compliance:overdue', {
