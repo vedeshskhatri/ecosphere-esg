@@ -1,4 +1,5 @@
 version: '3.9'
+
 services:
   postgres:
     image: postgres:16-alpine
@@ -23,6 +24,40 @@ services:
       - "5050:80"
     depends_on:
       - postgres
+    restart: unless-stopped
+
+  server:
+    build:
+      context: ./server
+      dockerfile: Dockerfile
+    container_name: ecosphere_server
+    ports:
+      - "5000:5000"
+    environment:
+      DATABASE_URL: "postgresql://ecosphere:ecosphere123@postgres:5432/ecosphere"
+      JWT_SECRET: "ecosphere-super-secret-jwt-key-2k26"
+      JWT_EXPIRES_IN: "24h"
+      PORT: 5000
+      CLIENT_URL: "http://localhost:3000"
+      UPLOAD_DIR: "./uploads"
+    volumes:
+      - ./server/uploads:/app/uploads
+    depends_on:
+      - postgres
+    restart: unless-stopped
+
+  client:
+    build:
+      context: ./client
+      dockerfile: Dockerfile
+      args:
+        VITE_API_URL: "http://localhost:5000/api"
+        VITE_SOCKET_URL: "http://localhost:5000"
+    container_name: ecosphere_client
+    ports:
+      - "3000:3000"
+    depends_on:
+      - server
     restart: unless-stopped
 
 volumes:
