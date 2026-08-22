@@ -79,7 +79,7 @@ Modern organizations are under increasing pressure to track, report, and improve
 
 ---
 
-## 🏆 Key Differentiators
+## 🏆 Key Differentiators.
 
 | Feature | What Makes It Special |
 |---------|----------------------|
