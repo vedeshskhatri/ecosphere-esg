@@ -711,3 +711,4 @@ This project is actively developed as part of a hackathon.
   <strong>Built with 💚 for the Odoo Hackathon 2K26</strong><br/>
   <em>"Making sustainability measurable, actionable, and engaging."</em>
 </p>
+---
